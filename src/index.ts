@@ -8,6 +8,7 @@ import session from "express-session";
 import adminAPI from "./routes/adminApi";
 import userAPI from "./routes/userAPI";
 import { connectDB } from "./config/database";
+const app = express();
 
 (async () => {
   await connectDB();
@@ -27,25 +28,30 @@ declare global {
   }
 }
 
-// 啟用 CORS 中介軟體，允許所有來源
-const corsOptions = cors({
-  origin: "http://localhost:3000", // 前端應用程式的 URL
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  credentials: true,
-});
+const allowedOrigins = [
+  "http://localhost:5173", // 你的前端開發網址
+  "http://localhost:3000", // 或其他前端網址
+];
 
-const app = express();
-
-app.use(corsOptions);
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true, // 若要帶 cookie/session
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  })
+);
 app.use(express.json());
 app.use(
   session({
     secret: "secret-key",
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false },
+    cookie: { secure: false }, // 若走 HTTPS，請改 true 並設定 sameSite
   })
 );
+
+// app.use(corsOptions);
+app.use(express.json());
 
 // 設置 Swagger UI 的路由
 // app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec));
@@ -60,15 +66,6 @@ app.use("/admin", adminAPI);
 
 app.get("/", function (req, res) {
   res.send('<a href="/api-docs">Go to API Docs</a>');
-});
-
-app.get("/status", (req, res) => {
-  if (!req.session.views) {
-    req.session.views = 1;
-  } else {
-    req.session.views++;
-  }
-  res.json({ status: "ok", views: req.session.views });
 });
 
 const PORT = Number(process.env.PORT) || 3001;

@@ -5,7 +5,9 @@ import path from "path";
 import fs from "fs";
 import { InitService } from "../service/InitService";
 import codeStorage from "../service/CodeStorage";
-
+import { judgeSingleCode, judgeAllCodeInStorage } from "../service/CodeJudger";
+import systemSettingsService from "../service/SystemSettingsServices";
+import scoreBoardService from "../service/ScoreBoardService";
 
 const router = Router();
 
@@ -14,47 +16,83 @@ router.get("/heartbeat", (req, res) => {
 });
 
 const initService = new InitService();
+router.post("/init", async (req, res) => {
+  console.log("Initializing system with config:", req.body.config);
+  const { config: configJSON, studentList } = req.body;
 
-router.get("/init", async (req, res) => {
-  const configJSON = req.body.config;
-  const studentList = req.body.studentList;
   if (!configJSON || !studentList) {
     return res.status(400).json({
       success: false,
       message: "Missing config or studentList in request body",
     });
   }
-  let response = await initService.initialize(configJSON, studentList);
-  if (!response) {
+
+  const ok = await initService.initialize(configJSON, studentList);
+  if (!ok) {
     return res
       .status(500)
       .json({ success: false, message: "Initialization failed" });
   }
   return res.json({ success: true, message: "User API initialized" });
 });
-
 router.get("/restore", async (req, res) => {
   let response = await initService.resetDatabase();
   return res.json({ success: true, message: "Database restored" });
 });
 
+router.get("/is-configured", async (req, res) => {
+  let isConfigured = await systemSettingsService.getConfig();
+  console.log("isConfigured:", isConfigured);
+  if (isConfigured) {
+    res.json({ success: true, isConfigured: true });
+  } else {
+    res.json({ success: true, isConfigured: false });
+  }
+});
+
 // run submission code
 
+router.get("/get-submitted-students", async (req, res) => {
+  const result = await codeStorage.getAllZipFiles(
+    path.join(__dirname, `../upload/`)
+  );
+  res.json({ success: true, result: result });
+});
+
 router.get("/get-submissions", async (req, res) => {
-  codeStorage.getAllZipFiles(path.join(__dirname, "../upload")).then((files) => {
-    res.json({ success: true, files });
+  const studentID = req.body.studentID;
+  console.log("Getting submissions for studentID:", studentID);
+  const fileNames = await codeStorage.listFilesInZip(
+    path.join(__dirname, `../upload/${studentID}.zip`)
+  );
+  res.json({
+    success: true,
+    fileNames: fileNames,
   });
 });
 
 router.post("/judge-code", async (req, res) => {
   const studentID = req.body.studentID;
-  const problemID = req.body.problemID;
-  const zipFileString = await codeStorage.unzipGetFileAsString(path.join(__dirname, `../upload/${studentID}.zip`), `${problemID}.py`);
+  const fileNames = await codeStorage.listFilesInZip(
+    path.join(__dirname, `../upload/${studentID}.zip`)
+  );
+  console.log("fileNames:", fileNames);
 
+  const result = await judgeAllCodeInStorage(studentID, fileNames);
+  console.dir(result, { depth: null });
+
+  res.json({
+    success: true,
+    result: result,
+  });
 });
 
-
-
-// router.post("/run-code", async (req, res) => {
-
+router.post("/all-student-scores", async (req, res) => {
+  const result = await scoreBoardService.getAllScores();
+  console.dir(result, { depth: null });
+  res.json({
+    success: true,
+    result: result,
+  });
+});
 export default router;

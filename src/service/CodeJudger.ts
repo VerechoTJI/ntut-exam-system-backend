@@ -1,211 +1,259 @@
-import axios from 'axios';
+import axios from "axios";
 import systemSettingsService from "../service/SystemSettingsServices";
-import { TestConfig } from '../types/InitService';
-import codeStorage from './CodeStorage';
+import { TestConfig } from "../types/InitService";
+import codeStorage from "./CodeStorage";
+import piston from "piston-client";
+import path from "path";
+import { serve } from "swagger-ui-express";
+import scoreBoardService from "./ScoreBoardService";
 
-
-const JUDGER_URL = process.env.JUDGER_URL || 'http://localhost:2358';
+const JUDGER_URL = process.env.JUDGER_URL || "http://localhost:2000";
 
 // 從環境變數讀取限制（可選）
 const CPU_TIME_LIMIT_MS = process.env.JUDGE_CPU_TIME_LIMIT_MS
-    ? Number(process.env.JUDGE_CPU_TIME_LIMIT_MS)
-    : 10000; // 預設 10 秒
+  ? Number(process.env.JUDGE_CPU_TIME_LIMIT_MS)
+  : 10000; // 預設 10 秒
 const WALL_TIME_LIMIT_MS = process.env.JUDGE_WALL_TIME_LIMIT_MS
-    ? Number(process.env.JUDGE_WALL_TIME_LIMIT_MS)
-    : 15000; // 預設 15 秒
+  ? Number(process.env.JUDGE_WALL_TIME_LIMIT_MS)
+  : 15000; // 預設 15 秒
 const MEMORY_LIMIT_KB = process.env.JUDGE_MEMORY_LIMIT_KB
-    ? Number(process.env.JUDGE_MEMORY_LIMIT_KB)
-    : 102400; // 預設 100 MB
+  ? Number(process.env.JUDGE_MEMORY_LIMIT_KB)
+  : 102400; // 預設 100 MB
 
 export type TestCase = {
-    id: string;
-    input: string;
-    output?: string;
+  id: string;
+  input: string;
+  output?: string;
 };
 
-export type MappedResult = {
-    id: string;
-    correct: boolean;
-    userOutput: string;
+export type JudgeAllResult = {
+  problemID: string;
+  results: JudgeResult[];
 };
 
-// 參考 Judge0 典型回傳欄位型別（批次）
-type Judge0Status = {
-    id: number;
-    description: string;
-};
+export async function judgeAllCodeInStorage(
+  studentID: string,
+  fileNames: string[]
+): Promise<JudgeAllResult[] | false> {
+  if (fileNames.length === 0) {
+    return false;
+  }
+  let newFilePaths = fileNames.map((fileName) => {
+    return fileName.replace(".py", "");
+  });
+  let allResults: JudgeAllResult[] = [];
+  for (let problemID of newFilePaths) {
+    console.log("Judging problemID:", problemID);
+    const rawPath = path.join(__dirname, `../upload/${studentID}.zip`);
+    const posixZipFilePath = path.posix.normalize(rawPath.replace(/\\/g, "/"));
+    const zipFileString = await codeStorage.unzipGetFileAsString(
+      posixZipFilePath, // <-- 使用修正過的路徑
+      `${problemID}.py`
+    );
+    const testCases = await getTestCases(problemID);
+    const results = await judgeSingleCode(testCases, zipFileString);
+    allResults.push({ problemID: problemID, results: results });
+  }
+  const previousScoreboard = await scoreBoardService.getScoreByStudentId(
+    studentID
+  );
+  if (!previousScoreboard) {
+    return false;
+  }
+  const mappedScoreboard = mapJudgeResultsToScoreBoardFormat(
+    allResults,
+    previousScoreboard.puzzle_results
+  );
+  console.log("Mapped Scoreboard:", mappedScoreboard);
+  await scoreBoardService.updateStudentScoreFromJudgeResults(
+    studentID,
+    mappedScoreboard,
+    Object.values(mappedScoreboard).filter((v) => v === true).length
+  );
+  return allResults;
+}
 
-type Judge0SubmissionResult = {
-    token: string;
-    stdout?: string | null;
-    stderr?: string | null;
-    compile_output?: string | null;
-    status?: Judge0Status;
-    time?: string;
-    memory?: number;
-};
-
-type EvaluateOptions = {
-    languageId?: number; // 預設 71 = Python 3
+export async function getTestCases(questionID: string): Promise<TestCase[]> {
+  const config = await systemSettingsService.getConfig();
+  if (!config) {
+    throw new Error("No config found");
+  }
+  const puzzles = config.puzzles;
+  let testCases: TestCase[] = [];
+  for (const question of puzzles) {
+    if (question.id !== questionID) {
+      continue;
+    }
+    for (const group of question.testCases) {
+      for (const openTestCase of group.openTestCases) {
+        testCases.push({
+          id: openTestCase.id as string,
+          input: openTestCase.input,
+          output: openTestCase.output,
+        });
+      }
+      for (const hiddenTestCase of group.hiddenTestCases) {
+        testCases.push({
+          id: hiddenTestCase.id as string,
+          input: hiddenTestCase.input,
+          output: hiddenTestCase.output,
+        });
+      }
+    }
+  }
+  return testCases;
+}
+export type JudgeResult = {
+  testCaseID: string;
+  success: boolean;
+  messeage: string; // 注意：依你的需求保留「messeage」拼字
 };
 
 /**
- * 以 Judge0 進行程式評測並映射回指定格式（使用 axios，TS + ES6）
+ * 使用 node-piston 對單一程式碼進行多筆測資評測
  *
- * - 使用批次提交 + wait=true，在一次請求中取得所有測資結果
- * - 讀取環境變數設定資源限制（CPU 時間、牆鐘時間、記憶體）
- * - 遇到任何錯誤（超時、編譯錯、執行錯等）時，將錯誤訊息字串放入 userOutput
+ * @param testCases 測資陣列（每筆包含輸入與期望輸出）
+ * @param programString 程式碼字串
+ * @param options 可選項目：語言、版本、超時、記憶體限制等
+ *
+ * 預設語言：python，版本（可由 /runtimes 查得）：3.10.0（常見）
  */
-
-
-export async function judgeAllCodeInStorage() {
-
-},
-
-export async function getTestCases(questionID: string): Promise<TestCase[]> {
-    const config = await systemSettingsService.getConfig();
-    if (!config) {
-        throw new Error('No config found');
-    }
-    const puzzles = config.puzzles;
-    let testCases: TestCase[] = [];
-    for (const question of puzzles) {
-        if (question.id !== questionID) {
-            continue;
-        }
-        for (const group of question.testCases) {
-            for (const openTestCase of group.openTestCases) {
-                testCases.push({
-                    id: openTestCase.id as string,
-                    input: openTestCase.input,
-                    output: openTestCase.output,
-                });
-            }
-            for (const hiddenTestCase of group.hiddenTestCases) {
-                testCases.push({
-                    id: hiddenTestCase.id as string,
-                    input: hiddenTestCase.input,
-                    output: hiddenTestCase.output,
-                });
-            }
-        }
-    }
-    return testCases;
-}
 export async function judgeSingleCode(
-    sourceCode: string,
-    testCases: TestCase[],
-    options: EvaluateOptions = {},
-): Promise<MappedResult[]> {
-    if (!Array.isArray(testCases) || testCases.length === 0) {
-        throw new Error('testCases 必須是非空陣列');
-    }
+  testCases: TestCase[],
+  programString: string,
+  options?: {
+    language?: string; // e.g. 'python'
+    version?: string; // e.g. '3.10.0'（可用 client.runtimes() 查）
+    runTimeoutMs?: number; // 執行超時（毫秒）
+    runMemoryKb?: number; // 記憶體限制（KB）
+    args?: string[]; // 命令列參數
+    mainFileName?: string; // 主要檔名（Piston 需要檔案名）
+  }
+): Promise<JudgeResult[]> {
+  if (!Array.isArray(testCases) || testCases.length === 0) {
+    throw new Error("testCases 必須是非空陣列");
+  }
+  const language = options?.language ?? "python";
+  const version = options?.version ?? "3.12.0";
+  const runTimeoutMs = options?.runTimeoutMs ?? 10000;
+  const runMemoryKb = options?.runMemoryKb ?? 100_000; // 256MB
+  const args = options?.args ?? [];
+  const mainFileName =
+    options?.mainFileName ?? (language === "python" ? "main.py" : "main.txt");
 
-    const { languageId = 71 } = options; // 預設 Python 3
+  // 建立 Piston Client
+  const client = piston({ server: JUDGER_URL });
+  const files = [{ name: mainFileName, content: programString }];
+  const normalize = (s: unknown) =>
+    typeof s === "string" ? s.replace(/\r\n/g, "\n").trimEnd() : s;
 
-    const url = `${JUDGER_URL}/submissions?base64_encoded=false&wait=true`;
-
-    // 構建提交 payload
-    const submissions = testCases.map(tc => {
-        const payload: Record<string, unknown> = {
-            language_id: languageId,
-            source_code: sourceCode,
-            stdin: tc.input ?? '',
-        };
-
-        if (typeof tc.output === 'string') {
-            payload.expected_output = tc.output;
-        }
-        // 資源限制（不同部署/版本支援程度可能不同）
-        if (typeof CPU_TIME_LIMIT_MS === 'number') {
-            payload.cpu_time_limit = CPU_TIME_LIMIT_MS / 1000; // 多數部署使用秒
-        }
-        if (typeof WALL_TIME_LIMIT_MS === 'number') {
-            payload.wall_time_limit = WALL_TIME_LIMIT_MS / 1000; // 若部署支援
-        }
-        if (typeof MEMORY_LIMIT_KB === 'number') {
-            payload.memory_limit = MEMORY_LIMIT_KB; // KB
-        }
-        return payload;
-    });
-
-    let results: Judge0SubmissionResult[];
+  const results: JudgeResult[] = [];
+  for (const tc of testCases) {
     try {
-        const resp = await axios.post<Judge0SubmissionResult[]>(
-            url,
-            { submissions },
-            {
-                headers: { 'Content-Type': 'application/json' },
-                // axios 客戶端超時（非 Judge0 的 wall_time_limit）
-                timeout: (WALL_TIME_LIMIT_MS && Number(WALL_TIME_LIMIT_MS)) || 30000,
-            },
-        );
-        results = resp.data;
-    } catch (err: unknown) {
-        // 將請求層錯誤轉換為指定格式（全部測資都視為錯誤）
-        const message = getAxiosErrorMessage(err);
-        return testCases.map(tc => ({
-            id: tc.id,
-            correct: false,
-            userOutput: String(message),
-        }));
+      const res: any = await client.execute({
+        language,
+        version,
+        files,
+        stdin: tc.input ?? "",
+        args,
+        run_timeout: runTimeoutMs,
+        run_memory_limit: runMemoryKb,
+      });
+
+      const stdout: string = (res?.run?.stdout ?? res?.stdout ?? "") as string;
+      const stderr: string = (res?.run?.stderr ?? res?.stderr ?? "") as string;
+      const exitCode: number | undefined = (res?.run?.code ?? res?.code) as
+        | number
+        | undefined;
+
+      const isError = typeof exitCode === "number" && exitCode !== 0;
+      let messeage: string;
+
+      if (isError) {
+        messeage =
+          (stderr && stderr.trim()) ||
+          (res?.run?.output ?? res?.output ?? "Runtime Error");
+      } else {
+        messeage = stdout ?? "";
+      }
+
+      // 比對期望輸出（若有）
+      const success =
+        typeof tc.output === "string"
+          ? normalize(stdout) === normalize(tc.output)
+          : !isError;
+
+      results.push({
+        testCaseID: tc.id,
+        success,
+        messeage: String(messeage),
+      });
+    } catch (err: any) {
+      const msg = err?.response?.data
+        ? JSON.stringify(err.response.data)
+        : err?.message ?? String(err);
+      results.push({
+        testCaseID: tc.id,
+        success: false,
+        messeage: msg,
+      });
     }
-
-    const normalize = (s: unknown) =>
-        typeof s === 'string' ? s.replace(/\r\n/g, '\n').trimEnd() : s;
-
-    // 映射到指定格式
-    return results.map((r, idx) => {
-        const tc = testCases[idx];
-        const stdout = r.stdout ?? '';
-        const stderr = r.stderr ?? '';
-        const compileOutput = r.compile_output ?? '';
-        const statusDesc = r.status?.description || '';
-        const isError = r.status?.id !== 3; // 3 = Accepted
-
-        let userOutput: string;
-        if (isError) {
-            userOutput =
-                (compileOutput && compileOutput.trim()) ||
-                (stderr && stderr.trim()) ||
-                statusDesc ||
-                'Runtime Error';
-        } else {
-            userOutput = (stdout ?? '').toString();
-        }
-
-        const correct =
-            typeof tc.output === 'string'
-                ? normalize(stdout) === normalize(tc.output)
-                : !isError;
-
-        return {
-            id: tc.id,
-            correct,
-            userOutput: String(userOutput),
-        };
-    });
+  }
+  return results;
 }
-
-/** 取得 axios 錯誤訊息（盡量轉為可讀字串） */
 function getAxiosErrorMessage(err: unknown): string {
-    if (isAxiosError(err)) {
-        const data = err.response?.data;
-        if (typeof data === 'string') return data;
-        if (data && typeof data === 'object') return JSON.stringify(data);
-        return err.message || 'Request Error';
-    }
-    if (err instanceof Error) return err.message;
-    try {
-        return JSON.stringify(err);
-    } catch {
-        return String(err);
-    }
+  if (isAxiosError(err)) {
+    const data = err.response?.data;
+    if (typeof data === "string") return data;
+    if (data && typeof data === "object") return JSON.stringify(data);
+    return err.message || "Request Error";
+  }
+  if (err instanceof Error) return err.message;
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return String(err);
+  }
 }
 
-/** Type guard for AxiosError without importing axios types globally */
 function isAxiosError<T = unknown>(
-    error: unknown,
+  error: unknown
 ): error is { response?: { data?: T }; message?: string } {
-    return typeof error === 'object' && error !== null && 'message' in error;
+  return typeof error === "object" && error !== null && "message" in error;
+}
+
+function mapJudgeResultsToScoreBoardFormat(
+  data: JudgeAllResult[],
+  baseScoreboard: any
+) {
+  // 複製基底，保留未提供題目的原狀
+  const result = { ...baseScoreboard };
+  if (!data || !Array.isArray(data)) return result;
+
+  for (const puzzleData of data) {
+    if (!puzzleData || typeof puzzleData !== "object") continue;
+    const problemID = puzzleData.problemID;
+
+    // 更新 puzzleX_status（僅當該鍵存在於基底時才更新，以避免非預期新增鍵）
+    const statusKey = `puzzle${problemID}_status`;
+    if (statusKey in result) {
+      const allCorrect =
+        Array.isArray(puzzleData.results) &&
+        puzzleData.results.every((tc) => tc.success === true);
+      result[statusKey] = allCorrect;
+    }
+    // 逐一更新 test case 鍵：puzzle{p}-{groupId}-{testIndex}
+    const tcs = Array.isArray(puzzleData.results) ? puzzleData.results : [];
+    for (const tc of tcs) {
+      if (!tc || typeof tc !== "object") continue;
+      // tc.testCaseID 格式為 "groupIndex-testIndex"（例如 "1-3"）
+      const parts = String(tc.testCaseID || "").split("-");
+      const testIndex = parts[1]; // 取第二段作為 testIndex
+      const testCaseKey = `puzzle${problemID}-${parts[0]}-${testIndex}`;
+      if (testCaseKey in result) {
+        result[testCaseKey] = tc.success;
+      }
+    }
+  }
+  return result;
 }
