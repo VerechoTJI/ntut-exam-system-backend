@@ -1,0 +1,27 @@
+x-logging:
+  &default-logging
+  logging:
+    driver: json-file
+    options:
+      max-size: 100M
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: my-postgres-db
+    restart: always # 讓容器在退出時自動重啟
+    environment:
+      POSTGRES_USER: myuser # 自定義使用者名稱
+      POSTGRES_PASSWORD: mypassword # 自定義密碼
+      POSTGRES_DB: mydatabase # 自定義資料庫名稱
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  piston:
+    extends:
+      file: ./piston/docker-compose.yaml
+      service: api
+volumes:
+  data:
+  postgres_data:

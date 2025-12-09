@@ -2,7 +2,8 @@ import axios from "axios";
 import systemSettingsService from "../service/SystemSettingsServices";
 import { TestConfig } from "../types/InitService";
 import codeStorage from "./CodeStorage";
-import piston from "piston-client";
+import piston from "../utilities/piston";
+// import piston from "piston-client";
 import path from "path";
 import { serve } from "swagger-ui-express";
 import scoreBoardService from "./ScoreBoardService";
@@ -142,6 +143,7 @@ export async function judgeSingleCode(
     options?.mainFileName ?? (language === "python" ? "main.py" : "main.txt");
 
   // 建立 Piston Client
+  // @ts-ignore
   const client = piston({ server: JUDGER_URL });
   const files = [{ name: mainFileName, content: programString }];
   const normalize = (s: unknown) =>
