@@ -59,21 +59,18 @@ interface MulterRequest extends Request {
 }
 const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
-router.post(
-  "/upload-program",
-  upload.single("file"),
-  (req: MulterRequest, res) => {
-    const file = req.file as multer.File;
-    const studentID = req.body.studentID;
-    console.log(`Received program upload from studentID: ${studentID}`);
-    if (!file || !studentID) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing file or studentID" });
-    }
-    console.log("Saving file to", file.path);
-    res.json({ success: true, filename: file.filename, path: file.path });
+router.post("/upload-program", upload.single("file"), (req: MulterRequest, res) => {
+  const file = req.file as multer.File;
+  const studentID = req.body.studentID;
+  console.log(`Received program upload from studentID: ${studentID}`);
+  if (!file || !studentID) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing file or studentID" });
   }
+  console.log("Saving file to", file.path);
+  res.json({ success: true, filename: file.filename, path: file.path });
+}
 );
 
 router.get("/get-config", async (req, res) => {
@@ -94,6 +91,7 @@ router.get("/status", (req, res) => {
 
 router.post("/post-result", (req, res) => {
   const studentID = req.body.studentInformation.id;
+
   const results = req.body.testResult;
   let correctCount = 0;
   for (const group in results) {
@@ -118,10 +116,14 @@ router.post("/post-file", (req, res) => {
 
 router.post("/is-student-valid", async (req, res) => {
   const studentID = req.body.studentID;
-  console.log("Verifying student ID:", studentID);
   const studentInfo = await systemSettingsService.getStudentInfo(studentID);
   if (studentInfo) {
-    res.json({ isValid: true, info: studentInfo });
+    res.json({
+      isValid: true, info: {
+        id: studentInfo.student_ID,
+        name: studentInfo.name
+      }
+    });
   }
   else {
     res.json({ isValid: false });

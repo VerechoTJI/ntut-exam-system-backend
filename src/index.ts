@@ -35,7 +35,7 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: true,
     credentials: true, // 若要帶 cookie/session
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   })
@@ -49,28 +49,17 @@ app.use(
     cookie: { secure: false }, // 若走 HTTPS，請改 true 並設定 sameSite
   })
 );
-
-// app.use(corsOptions);
 app.use(express.json());
 
-// 設置 Swagger UI 的路由
-// app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec));
-
-// 引用所有的 router
-// app.use("/api", apiRouter);
 app.use("/api", userAPI);
 app.use("/admin", adminAPI);
 
-// 提供 Swagger UI 所需的靜態檔案
-// app.use("/swagger-ui-assets", express.static(pathToSwaggerUi));
-
 app.get("/", function (req, res) {
-  res.send('<a href="/api-docs">Go to API Docs</a>');
+  res.send('This is TA api server.');
 });
 
 const PORT = Number(process.env.PORT) || 3001;
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log("Server is running on port 3001");
-  console.log("API docs are available at http://localhost:3001/api-docs");
+  console.log(`Server is running on port ${PORT}`);
 });
