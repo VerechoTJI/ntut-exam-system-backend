@@ -137,14 +137,13 @@ router.post("/user-action-logger", async (req, res) => {
     `User ${req.body.studentID} from IP: ${userIP} performed action: ${req.body.actionType}`,
     req.body.details
   );
-  console.dir(req.body.details, { depth: null, colors: true });
   await userLogService.createLog({
     student_ID: req.body.studentID,
     ip_address: userIP || "unknown",
     action_type: req.body.level || "unknown",
     details: req.body.details[0] || "",
   });
-  const result = await alertLogService.updateAndCheckAlerts();
+  await alertLogService.updateAndCheckAlerts();
   res.json({ success: true, message: "Action logged successfully" });
 });
 

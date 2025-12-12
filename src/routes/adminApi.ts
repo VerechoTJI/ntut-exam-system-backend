@@ -44,7 +44,6 @@ router.get("/restore", async (req, res) => {
 
 router.get("/is-configured", async (req, res) => {
   let isConfigured = await systemSettingsService.getConfig();
-  console.log("isConfigured:", isConfigured);
   if (isConfigured) {
     res.json({ success: true, isConfigured: true });
   } else {
@@ -99,10 +98,11 @@ router.post("/all-student-scores", async (req, res) => {
 
 
 router.get("/update-alert-list", async (req, res) => {
-  const result = await alertLogService.updateAndCheckAlerts();
+  const alerts = await userLogService.checkSecurityAlerts();
+  const createdAlerts = await alertLogService.addFromAlerts(alerts);
   res.json({
     success: true,
-    result: result,
+    result: createdAlerts,
   });
 });
 
