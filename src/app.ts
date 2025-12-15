@@ -35,7 +35,7 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: true,
+    origin: '*',
     credentials: true, // 若要帶 cookie/session
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   })

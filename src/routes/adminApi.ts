@@ -43,6 +43,10 @@ router.post(
       req.body.config,
       req.body.studentList
     );
+    // make upload directory
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir);
+    }
     if (!ok)
       return res
         .status(500)

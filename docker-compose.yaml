@@ -1,27 +1,46 @@
-x-logging:
-  &default-logging
-  logging:
-    driver: json-file
-    options:
-      max-size: 100M
-
 services:
   postgres:
     image: postgres:16
     container_name: my-postgres-db
-    restart: always # 讓容器在退出時自動重啟
     environment:
-      POSTGRES_USER: myuser # 自定義使用者名稱
-      POSTGRES_PASSWORD: mypassword # 自定義密碼
-      POSTGRES_DB: mydatabase # 自定義資料庫名稱
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-  piston:
-    extends:
-      file: ./piston/docker-compose.yaml
-      service: api
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myuser -d mydatabase"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: my-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3001:3001" # 依你的 Express 實際 port 改
+    environment:
+      NODE_ENV: development
+      # 讓 container 內用服務名 postgres 連 DB（不要用 localhost）
+      DATABASE_URL: postgres://myuser:mypassword@postgres:5432/mydatabase
+
+      # 若你用 nodemon/chokidar 在某些環境抓不到檔案事件，可打開 polling：
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      # (1) 程式碼掛載：本機 -> container
+      - .:/app
+      # (2) node_modules 用 named volume，避免被本機覆蓋
+      - backend_node_modules:/app/node_modules
+
 volumes:
-  data:
   postgres_data:
+  backend_node_modules:
