@@ -1,143 +1,128 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
+import type { File as MulterFile } from "multer";
 import fs from "fs/promises";
 import path from "path";
-import { InitService } from "../service/InitService";
-import codeStorage from "../service/CodeStorage";
-import { judgeAllCodeInStorage } from "../service/CodeJudger";
 import systemSettingsService from "../service/SystemSettingsServices";
 import scoreBoardService from "../service/ScoreBoardService";
 import userLogService from "../service/UserLogService";
+import socketService from "../socket/SocketService";
 import alertLogService from "../service/AlertLogService";
 
-const UPLOAD_DIR = path.join(__dirname, "..", "upload");
-const ZIP_EXTENSION = ".zip";
+export const PROJECT_ROOT = path.join(__dirname, "..");
+export const UPLOAD_DIR = path.join(PROJECT_ROOT, "upload");
+export const ZIP_EXTENSION = ".zip";
+export const MAX_UPLOAD_SIZE = 10 * 1024 * 1024; // 10MB
 
-export const requireFields = (obj: any, fields: string[]) => {
-  const missing = fields.filter(
-    (f) => obj[f] === undefined || obj[f] === null || obj[f] === ""
-  );
-  return missing;
+export function sanitizeStudentID(id: string): string {
+  return (id || "")
+    .toString()
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]/g, "");
+}
+
+// GET /status
+export const status = async (_req: Request, res: Response) => {
+  res.json({ success: true });
 };
 
-export const isSafeStudentId = (id: string) => /^[A-Za-z0-9_-]+$/.test(id);
-
-const initService = new InitService();
-
-export const heartbeat = async (_req: Request, res: Response) => {
-  res.json({ success: true, data: { message: "User API is alive" } });
-};
-
-export const init = async (req: Request, res: Response) => {
-  const missing = requireFields(req.body, ["config", "studentList"]);
-  if (missing.length) {
-    return res
-      .status(400)
-      .json({ success: false, message: `Missing: ${missing.join(", ")}` });
-  }
-
-  const ok = await initService.initialize(
-    req.body.config,
-    req.body.studentList
-  );
-
-  try {
-    await fs.mkdir(UPLOAD_DIR, { recursive: true });
-  } catch (err) {
-    return res
-      .status(500)
-      .json({ success: false, message: "Failed to create upload directory" });
-  }
-
-  if (!ok) {
-    return res
-      .status(500)
-      .json({ success: false, message: "Initialization failed" });
-  }
-
-  res.json({ success: true, data: { message: "User API initialized" } });
-};
-
-export const resetDatabase = async (_req: Request, res: Response) => {
-  await initService.resetDatabase(true);
-  res.json({ success: true, data: { message: "Database reset" } });
-};
-
-export const isConfigured = async (_req: Request, res: Response) => {
+// GET /get-config
+export const getConfig = async (_req: Request, res: Response) => {
   const config = await systemSettingsService.getConfig();
-  res.json({ success: true, data: { isConfigured: !!config } });
+  if (!config) {
+    return res
+      .status(500)
+      .json({ success: false, message: "Config not found in settings" });
+  }
+  res.json(config);
 };
 
-export const getSubmittedStudents = async (_req: Request, res: Response) => {
-  const result = await codeStorage.getAllZipFiles(UPLOAD_DIR);
-  res.json({ success: true, data: { result } });
-};
+// POST /upload-program (multer 已處理檔案)
+export const uploadProgram = async (req: Request, res: Response) => {
+  const file = (req as any).file as MulterFile | undefined;
+  const studentIDRaw = req.body?.studentID ?? "";
+  const studentID = sanitizeStudentID(studentIDRaw);
 
-export const judgeCode = async (req: Request, res: Response) => {
-  const { studentID } = req.body;
-  if (
-    !studentID ||
-    typeof studentID !== "string" ||
-    !isSafeStudentId(studentID)
-  ) {
+  if (!file || !studentID) {
     return res
       .status(400)
-      .json({ success: false, message: "Invalid studentID" });
+      .json({ success: false, message: "Missing file or studentID" });
   }
 
-  const safeStudentID = path.basename(studentID);
-  const zipPath = path.join(UPLOAD_DIR, `${safeStudentID}${ZIP_EXTENSION}`);
-
-  try {
-    await fs.access(zipPath);
-  } catch {
-    return res
-      .status(404)
-      .json({ success: false, message: "Submission not found" });
+  // 確認副檔名
+  const ext = path.extname(file.filename).toLowerCase();
+  if (ext && ext !== ZIP_EXTENSION) {
+    // 若有需要可在這裡回 400；目前僅警告
+    console.warn(`Non-zip upload attempted: ${file.originalname}`);
   }
 
-  const fileNames = await codeStorage.listFilesInZip(zipPath);
-  const result = await judgeAllCodeInStorage(studentID, fileNames);
-  res.json({ success: true, data: { result } });
+  res.json({ success: true, filename: file.filename, path: file.path });
 };
 
-export const getAllStudentScores = async (_req: Request, res: Response) => {
-  const result = await scoreBoardService.getAllScores();
-  res.json({ success: true, data: { result, success: true } });
-};
+// POST /post-result
+export const postResult = async (req: Request, res: Response) => {
+  const studentID = req.body?.studentInformation?.id;
+  const results = req.body?.testResult || {};
 
-export const updateAlertList = async (_req: Request, res: Response) => {
-  const alerts = await userLogService.checkSecurityAlerts();
-  const createdAlerts = await alertLogService.addFromAlerts(alerts);
-  await alertLogService.resetCooldown(true);
-  res.json({ success: true, data: { createdAlerts } });
-};
-
-export const getAlertLogs = async (_req: Request, res: Response) => {
-  const result = await alertLogService.getAll();
-  res.json({ success: true, data: { result } });
-};
-
-export const setAlertOkStatus = async (req: Request, res: Response) => {
-  const missing = requireFields(req.body, ["id", "isOk"]);
-  if (missing.length) {
+  if (!studentID) {
     return res
       .status(400)
-      .json({ success: false, message: `Missing: ${missing.join(", ")}` });
+      .json({ success: false, message: "Missing studentID" });
   }
 
-  const { id, isOk } = req.body;
-  const success = await alertLogService.setOkStatus(id, isOk);
-  res.json({
-    success,
-    data: {
-      message: success
-        ? "Alert status updated"
-        : "Failed to update alert status",
-    },
+  let correctCount = 0;
+  for (const group in results) {
+    const c = results[group]?.correctCount ?? 0;
+    correctCount += c;
+  }
+
+  await scoreBoardService.updateStudentScore({
+    student_ID: studentID,
+    score: results,
+    passed_amount: correctCount,
   });
+
+  const scoreboard = await scoreBoardService.getAllScores();
+  socketService.triggerScoreUpdateEvent(scoreboard);
+
+  res.json({ success: true, message: "Results received successfully" });
 };
 
-export const getAllLogs = async (_req: Request, res: Response) => {
-  const result = await userLogService.getAllLogs();
-  res.json({ success: true, data: { result } });
+// POST /post-file
+export const postFile = async (req: Request, res: Response) => {
+  res.json({ message: "File data received successfully" });
+};
+
+// POST /is-student-valid
+export const isStudentValid = async (req: Request, res: Response) => {
+  const studentID = req.body?.studentID;
+  const studentInfo = await systemSettingsService.getStudentInfo(studentID);
+
+  if (studentInfo) {
+    return res.json({
+      isValid: true,
+      info: { id: studentInfo.student_ID, name: studentInfo.name },
+    });
+  }
+  res.json({ isValid: false });
+};
+
+// POST /user-action-logger
+export const userActionLogger = async (req: Request, res: Response) => {
+  const userIP = req.ip || req.socket.remoteAddress || "unknown";
+  const studentID = req.body?.studentID ?? "unknown";
+
+  console.log(
+    `User ${studentID} from IP: ${userIP} performed action: ${req.body?.actionType}`,
+    req.body?.details
+  );
+
+  await userLogService.createLog({
+    student_ID: studentID,
+    ip_address: userIP,
+    action_type: req.body?.level || "unknown",
+    details: req.body?.details?.[0] || "",
+  });
+
+  await alertLogService.updateAndCheckAlerts();
+  res.json({ success: true, message: "Action logged successfully" });
 };
