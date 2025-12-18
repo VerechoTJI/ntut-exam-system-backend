@@ -1,52 +1,73 @@
-import { Router, Request } from "express";
-import multer, { Multer } from "multer";
+import { Router, Request, Response, NextFunction } from "express";
+import multer from "multer";
 import path from "path";
-import fs from "fs";
-import systemSettingsService from "../service/SystemSettingsServices";
-import scoreBoardService from "../service/ScoreBoardService";
-import userLogService from "../service/UserLogService";
-import socketService from "../socket/SocketService";
-import alertLogService from "../service/AlertLogService";
+import fs from "fs/promises";
+import {
+  status,
+  getConfig,
+  uploadProgram,
+  postResult,
+  postFile,
+  isStudentValid,
+  userActionLogger,
+} from "../controllers/user.controller";
 
-const router = Router();
-const projectRoot = path.join(__dirname, "..");
-const uploadRootDir = path.join(projectRoot, "upload");
+export const asyncHandler =
+  (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) =>
+  (req: Request, res: Response, next: NextFunction) =>
+    Promise.resolve(fn(req, res, next)).catch(next);
 
-// 安全清理學號，避免奇怪字元影響檔名
-function sanitizeStudentID(id: string): string {
-  // 僅允許英數與底線、破折號；其他移除
+export const PROJECT_ROOT = path.join(__dirname, "..");
+export const UPLOAD_DIR = path.join(PROJECT_ROOT, "upload");
+export const ZIP_EXTENSION = ".zip";
+export const MAX_UPLOAD_SIZE = 10 * 1024 * 1024; // 10MB
+
+export function sanitizeStudentID(id: string): string {
   return (id || "")
     .toString()
     .trim()
     .replace(/[^a-zA-Z0-9_-]/g, "");
 }
 
+export function requireFields(obj: any, fields: string[]) {
+  const missing = fields.filter(
+    (f) => obj[f] === undefined || obj[f] === null || obj[f] === ""
+  );
+  return missing;
+}
+
+const router = Router();
+
+/**
+ * 確保上傳目錄存在（非同步且非阻塞）
+ */
+const ensureUploadDir = async () => {
+  await fs.mkdir(UPLOAD_DIR, { recursive: true });
+};
+
+/**
+ * Multer 設定：使用 diskStorage，但確保 mkdir 採用 fs/promises
+ */
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    if (!fs.existsSync(uploadRootDir)) {
-      fs.mkdirSync(uploadRootDir, { recursive: true });
-    }
-    cb(null, uploadRootDir);
+  destination: (_req, _file, cb) => {
+    ensureUploadDir()
+      .then(() => cb(null, UPLOAD_DIR))
+      .catch((err) => cb(err, UPLOAD_DIR));
   },
   filename: (req, file, cb) => {
     const studentIDRaw = (req.body?.studentID ?? "").toString();
     const studentID = sanitizeStudentID(studentIDRaw);
-
-    console.log(`filename() originalname: ${file.originalname}`);
-    console.log(
-      `filename() studentID from body: ${studentIDRaw} -> sanitized: ${studentID}`
-    );
+    const targetName = `${studentID}${ZIP_EXTENSION}`;
 
     if (!studentID) {
-      // 若在這裡拿不到 studentID，回傳錯誤避免用錯檔名
       return cb(
         new Error("Missing studentID in form-data before file field."),
         ""
       );
     }
-    const targetName = `${studentID}.zip`;
+
     const ext = path.extname(file.originalname).toLowerCase();
-    if (ext && ext !== ".zip") {
+    if (ext && ext !== ZIP_EXTENSION) {
       console.warn(
         `Non-zip upload attempted: ${file.originalname}. Forcing name ${targetName}.`
       );
@@ -56,95 +77,22 @@ const storage = multer.diskStorage({
   },
 });
 
-interface MulterRequest extends Request {
-  file: multer.File;
-}
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_UPLOAD_SIZE },
+});
 
-router.post("/upload-program", upload.single("file"), (req: MulterRequest, res) => {
-  const file = req.file as multer.File;
-  const studentID = req.body.studentID;
-  console.log(`Received program upload from studentID: ${studentID}`);
-  if (!file || !studentID) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Missing file or studentID" });
-  }
-  console.log("Saving file to", file.path);
-  res.json({ success: true, filename: file.filename, path: file.path });
-}
+// 路由定義
+router.get("/status", asyncHandler(status));
+router.get("/get-config", asyncHandler(getConfig));
+router.post(
+  "/upload-program",
+  upload.single("file"),
+  asyncHandler(uploadProgram)
 );
-
-router.get("/get-config", async (req, res) => {
-  const config = await systemSettingsService.getConfig()
-  if (!config) {
-    return res
-      .status(500)
-      .json({ success: false, message: "Config not found in settings" });
-  }
-  res.json(config);
-});
-
-router.get("/status", (req, res) => {
-  res.json({
-    success: true,
-  });
-});
-
-router.post("/post-result", async (req, res) => {
-  const studentID = req.body.studentInformation.id;
-
-  const results = req.body.testResult;
-  let correctCount = 0;
-  for (const group in results) {
-    correctCount += results[group].correctCount;
-  };
-
-  await scoreBoardService.updateStudentScore({
-    student_ID: studentID,
-    score: results,
-    passed_amount: correctCount,
-  });
-  const result = await scoreBoardService.getAllScores();
-  socketService.triggerScoreUpdateEvent(result);
-  res.json({ success: true, message: "Results received successfully" });
-});
-
-router.post("/post-file", (req, res) => {
-  console.log("Received file data:", req.body);
-  res.json({ message: "File data received successfully" });
-});
-
-router.post("/is-student-valid", async (req, res) => {
-  const studentID = req.body.studentID;
-  const studentInfo = await systemSettingsService.getStudentInfo(studentID);
-  if (studentInfo) {
-    res.json({
-      isValid: true, info: {
-        id: studentInfo.student_ID,
-        name: studentInfo.name
-      }
-    });
-  }
-  else {
-    res.json({ isValid: false });
-  }
-});
-
-router.post("/user-action-logger", async (req, res) => {
-  const userIP = req.ip || req.socket.remoteAddress;
-  console.log(
-    `User ${req.body.studentID} from IP: ${userIP} performed action: ${req.body.actionType}`,
-    req.body.details
-  );
-  await userLogService.createLog({
-    student_ID: req.body.studentID,
-    ip_address: userIP || "unknown",
-    action_type: req.body.level || "unknown",
-    details: req.body.details[0] || "",
-  });
-  await alertLogService.updateAndCheckAlerts();
-  res.json({ success: true, message: "Action logged successfully" });
-});
+router.post("/post-result", asyncHandler(postResult));
+router.post("/post-file", asyncHandler(postFile));
+router.post("/is-student-valid", asyncHandler(isStudentValid));
+router.post("/user-action-logger", asyncHandler(userActionLogger));
 
 export default router;
