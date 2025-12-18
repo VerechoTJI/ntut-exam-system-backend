@@ -27,6 +27,7 @@ services:
         condition: service_healthy
     ports:
       - "3001:3001" # 依你的 Express 實際 port 改
+      - "3002:3002" # Admin port
     environment:
       NODE_ENV: development
       # 讓 container 內用服務名 postgres 連 DB（不要用 localhost）
