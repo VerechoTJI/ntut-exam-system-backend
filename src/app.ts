@@ -4,10 +4,10 @@ import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUI from "swagger-ui-express";
 import cors from "cors";
 import session from "express-session";
-// import apiRouter from "./routes/index";
 import adminAPI from "./routes/adminApi";
 import userAPI from "./routes/userAPI";
 import { connectDB } from "./config/database";
+
 const app = express();
 
 (async () => {
@@ -28,40 +28,34 @@ declare global {
   }
 }
 
-const allowedOrigins = [
-  "http://localhost:5173", // 你的前端開發網址
-  "http://localhost:3000", // 或其他前端網址
-];
-
+// 這裡只定義「可以設定在 app 上的共用 middleware」
+// 注意：CORS 先設寬一點，後面在 admin server 再額外加嚴格限制
 app.use(
   cors({
-    origin: '*',
-    credentials: true, // 若要帶 cookie/session
+    origin: "*",
+    credentials: true,
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   })
 );
+
 app.use(express.json());
+
 app.use(
   session({
     secret: "secret-key",
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }, // 若走 HTTPS，請改 true 並設定 sameSite
+    cookie: { secure: false },
   })
 );
+
 app.use(express.json());
 
+// 這裡只掛「user 的 API」
 app.use("/api", userAPI);
-app.use("/admin", adminAPI);
 
 app.get("/", function (req, res) {
-  res.send('This is TA api server.');
+  res.send("This is user's api");
 });
-
-const PORT = Number(process.env.PORT) || 3001;
-
-// app.listen(PORT, "0.0.0.0", () => {
-//   console.log(`Server is running on port ${PORT}`);
-// });
 
 export default app;
