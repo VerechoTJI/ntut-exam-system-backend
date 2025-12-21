@@ -15,6 +15,9 @@ export class UserActionLog extends Model {
   ip_address!: string;
 
   @Column(DataType.STRING)
+  mac_address!: string;
+
+  @Column(DataType.STRING)
   action_type!: string;
 
   @Column(DataType.TEXT)

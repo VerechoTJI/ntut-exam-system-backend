@@ -3,7 +3,8 @@ import { Sequelize } from "sequelize-typescript";
 import { sequelize } from "../config/database"; // 引入我們建立的連線實例
 import { UserActionLog } from "../models/UserActionLog";
 import { SystemSettings } from "../models/SystemSettings";
-import { AlertLog } from "../models/AlertLog";
+import { ViolationLog } from "../models/ViolationLog";
+import studentNetworkService from "./StudentNetwork";
 import {
   TestConfig,
   ClientStudentInformation,
@@ -27,7 +28,10 @@ export class InitService {
     const response3 = await new SystemSettingsService().saveStudentList(
       students
     );
-    return response1 && response2 && response3;
+    const response4 = await studentNetworkService.initializeStudents(
+      studentList
+    );
+    return response1 && response2 && response3 && response4;
   }
 
   async initializeTheDatabase(
@@ -120,7 +124,7 @@ export class InitService {
       }
 
       // 4. 清除警示日誌
-      await AlertLog.destroy({
+      await ViolationLog.destroy({
         where: {},
         truncate: true,
         cascade: true,
