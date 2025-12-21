@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import type { File as MulterFile } from "multer";
 import fs from "fs/promises";
 import path from "path";
@@ -6,7 +6,7 @@ import systemSettingsService from "../service/SystemSettingsServices";
 import scoreBoardService from "../service/ScoreBoardService";
 import userLogService from "../service/UserLogService";
 import socketService from "../socket/SocketService";
-import alertLogService from "../service/AlertLogService";
+import studentNetworkService from "../service/StudentNetwork";
 
 export const PROJECT_ROOT = path.join(__dirname, "..");
 export const UPLOAD_DIR = path.join(PROJECT_ROOT, "upload");
@@ -20,12 +20,10 @@ export function sanitizeStudentID(id: string): string {
     .replace(/[^a-zA-Z0-9_-]/g, "");
 }
 
-// GET /status
 export const status = async (_req: Request, res: Response) => {
   res.json({ success: true });
 };
 
-// GET /get-config
 export const getConfig = async (_req: Request, res: Response) => {
   const config = await systemSettingsService.getConfig();
   if (!config) {
@@ -36,32 +34,43 @@ export const getConfig = async (_req: Request, res: Response) => {
   res.json(config);
 };
 
-// POST /upload-program (multer 已處理檔案)
 export const uploadProgram = async (req: Request, res: Response) => {
   const file = (req as any).file as MulterFile | undefined;
   const studentIDRaw = req.body?.studentID ?? "";
   const studentID = sanitizeStudentID(studentIDRaw);
+  const mac = req.body?.macAddress ?? "";
+  const ip = req.ip || req.socket.remoteAddress || "unknown";
 
   if (!file || !studentID) {
     return res
       .status(400)
       .json({ success: false, message: "Missing file or studentID" });
   }
-
-  // 確認副檔名
   const ext = path.extname(file.filename).toLowerCase();
   if (ext && ext !== ZIP_EXTENSION) {
-    // 若有需要可在這裡回 400；目前僅警告
     console.warn(`Non-zip upload attempted: ${file.originalname}`);
   }
+
+  userLogService
+    .createLog({
+      student_ID: studentID,
+      ip_address: ip,
+      mac_address: mac,
+      action_type: "upload",
+      details: `Uploaded file: ${file.originalname} as ${file.filename}`,
+    })
+    .catch((err) => {
+      console.error("Failed to log upload action:", err);
+    });
 
   res.json({ success: true, filename: file.filename, path: file.path });
 };
 
-// POST /post-result
 export const postResult = async (req: Request, res: Response) => {
   const studentID = req.body?.studentInformation?.id;
   const results = req.body?.testResult || {};
+  const ip = req.ip || req.socket.remoteAddress || "unknown";
+  const mac = req.body?.macAddress ?? "";
 
   if (!studentID) {
     return res
@@ -84,32 +93,54 @@ export const postResult = async (req: Request, res: Response) => {
   const scoreboard = await scoreBoardService.getAllScores();
   socketService.triggerScoreUpdateEvent(scoreboard);
 
+  await userLogService.createLog({
+    student_ID: studentID,
+    ip_address: ip,
+    mac_address: mac,
+    action_type: "submit_result",
+    details: `Submitted results with ${correctCount} correct answers.`,
+  });
+
   res.json({ success: true, message: "Results received successfully" });
 };
 
-// POST /post-file
-export const postFile = async (req: Request, res: Response) => {
+export const postFile = async (_req: Request, res: Response) => {
   res.json({ message: "File data received successfully" });
 };
 
-// POST /is-student-valid
 export const isStudentValid = async (req: Request, res: Response) => {
   const studentID = req.body?.studentID;
+  const mac = req.body?.macAddress ?? "";
   const studentInfo = await systemSettingsService.getStudentInfo(studentID);
+  const ip = req.ip || req.socket.remoteAddress || "unknown";
+
+  await userLogService.createLog({
+    student_ID: studentID || "unknown",
+    ip_address: ip,
+    mac_address: mac,
+    action_type: "verify_student | login",
+    details: `Verified student ID: ${studentID}`,
+  });
+
+  const userPSK = await studentNetworkService.getKey(studentID);
 
   if (studentInfo) {
     return res.json({
       isValid: true,
-      info: { id: studentInfo.student_ID, name: studentInfo.name },
+      info: {
+        id: studentInfo.student_ID,
+        name: studentInfo.name,
+        psk: userPSK ? userPSK : null,
+      },
     });
   }
   res.json({ isValid: false });
 };
 
-// POST /user-action-logger
 export const userActionLogger = async (req: Request, res: Response) => {
   const userIP = req.ip || req.socket.remoteAddress || "unknown";
   const studentID = req.body?.studentID ?? "unknown";
+  const mac = req.body?.macAddress ?? "";
 
   console.log(
     `User ${studentID} from IP: ${userIP} performed action: ${req.body?.actionType}`,
@@ -119,10 +150,9 @@ export const userActionLogger = async (req: Request, res: Response) => {
   await userLogService.createLog({
     student_ID: studentID,
     ip_address: userIP,
+    mac_address: mac,
     action_type: req.body?.level || "unknown",
     details: req.body?.details?.[0] || "",
   });
-
-  await alertLogService.updateAndCheckAlerts();
   res.json({ success: true, message: "Action logged successfully" });
 };

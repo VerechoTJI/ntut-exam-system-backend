@@ -51,6 +51,21 @@ export class SystemSettingsService {
     const userInfo = studentList.find((user) => user.student_ID === studentID);
     return userInfo
   }
+  async updateConfigAvailability(available: boolean) {
+    const config = await this.getConfig();
+    if (!config) {
+      console.warn("⚠️ No config found to update availability");
+      return false;
+    }
+    const availability = await this.getSetting("config_availability");
+    if (availability === null) {
+      await this.createSetting("config_availability", JSON.stringify(available));
+    } else {
+      await this.updateSetting("config_availability", JSON.stringify(available));
+    }
+    console.log(`✅ Config availability updated to ${available}`);
+    return true;
+  }
   async createSetting(name: string, value: string) {
     try {
       // 檢查是否已存在 (為了避免重複建立，先查一次是比較安全的作法)

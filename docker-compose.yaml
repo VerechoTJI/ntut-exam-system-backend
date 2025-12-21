@@ -16,31 +16,31 @@ services:
       timeout: 5s
       retries: 10
 
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: my-backend
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-    ports:
-      - "3001:3001" # 依你的 Express 實際 port 改
-      - "3002:3002" # Admin port
-    environment:
-      NODE_ENV: development
-      # 讓 container 內用服務名 postgres 連 DB（不要用 localhost）
-      DATABASE_URL: postgres://myuser:mypassword@postgres:5432/mydatabase
+  # backend:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: my-backend
+  #   restart: unless-stopped
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   ports:
+  #     - "3001:3001" # 依你的 Express 實際 port 改
+  #     - "3002:3002" # Admin port
+  #   environment:
+  #     NODE_ENV: development
+  #     # 讓 container 內用服務名 postgres 連 DB（不要用 localhost）
+  #     DATABASE_URL: postgres://myuser:mypassword@postgres:5432/mydatabase
 
-      # 若你用 nodemon/chokidar 在某些環境抓不到檔案事件，可打開 polling：
-      CHOKIDAR_USEPOLLING: "true"
-      WATCHPACK_POLLING: "true"
-    volumes:
-      # (1) 程式碼掛載：本機 -> container
-      - .:/app
-      # (2) node_modules 用 named volume，避免被本機覆蓋
-      - backend_node_modules:/app/node_modules
+  #     # 若你用 nodemon/chokidar 在某些環境抓不到檔案事件，可打開 polling：
+  #     CHOKIDAR_USEPOLLING: "true"
+  #     WATCHPACK_POLLING: "true"
+  #   volumes:
+  #     # (1) 程式碼掛載：本機 -> container
+  #     - .:/app
+  #     # (2) node_modules 用 named volume，避免被本機覆蓋
+  #     - backend_node_modules:/app/node_modules
 
 volumes:
   postgres_data:

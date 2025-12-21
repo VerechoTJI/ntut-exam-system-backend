@@ -7,7 +7,7 @@ import { judgeAllCodeInStorage } from "../service/CodeJudger";
 import systemSettingsService from "../service/SystemSettingsServices";
 import scoreBoardService from "../service/ScoreBoardService";
 import userLogService from "../service/UserLogService";
-import alertLogService from "../service/AlertLogService";
+import alertLogService from "../service/ViolationLogService";
 
 const UPLOAD_DIR = path.join(__dirname, "..", "upload");
 const ZIP_EXTENSION = ".zip";

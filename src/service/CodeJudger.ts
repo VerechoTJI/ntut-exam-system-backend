@@ -44,7 +44,6 @@ export async function judgeAllCodeInStorage(
   });
   let allResults: JudgeAllResult[] = [];
   for (let problemID of newFilePaths) {
-    console.log("Judging problemID:", problemID);
     const rawPath = path.join(__dirname, `../upload/${studentID}.zip`);
     const posixZipFilePath = path.posix.normalize(rawPath.replace(/\\/g, "/"));
     const zipFileString = await codeStorage.unzipGetFileAsString(
@@ -65,7 +64,6 @@ export async function judgeAllCodeInStorage(
     allResults,
     previousScoreboard.puzzle_results
   );
-  console.log("Mapped Scoreboard:", mappedScoreboard);
   await scoreBoardService.updateStudentScoreFromJudgeResults(
     studentID,
     mappedScoreboard,

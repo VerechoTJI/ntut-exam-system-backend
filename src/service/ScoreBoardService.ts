@@ -188,8 +188,8 @@ export class ScoreBoardService {
         }
       }
     }
-    console.log("Mapped result to ScoreBoard format:");
-    console.dir(result, { depth: null, colors: true });
+    // console.log("Mapped result to ScoreBoard format:");
+    // console.dir(result, { depth: null, colors: true });
     return result;
   }
 }
