@@ -13,8 +13,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/swagger-jsdoc": "^6.0.4",
-    "@types/swagger-ui-express": "^4.1.8",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
@@ -27,10 +25,6 @@
     "sequelize": "^6.37.7",
     "sequelize-typescript": "^2.1.6",
     "socket.io": "^4.8.1",
-    "swagger-jsdoc": "^6.2.8",
-    "swagger-ui": "^5.29.5",
-    "swagger-ui-dist": "^5.29.5",
-    "swagger-ui-express": "^5.0.1",
     "unzipper": "^0.12.3"
   },
   "devDependencies": {
