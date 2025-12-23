@@ -29,6 +29,11 @@ export class AntiCheatService {
         // 1) log user action
         await this.userLogs.createLog(input);
 
+        // 1-1) skip anti-cheat for unknown student_ID
+        if (input.student_ID == "unknown" || input.student_ID == "") {
+            return
+        }
+
         // 2) run network anti-cheat
         const networkResult = await this.network.addOrUpdateStudentNetwork({
             studentID: input.student_ID,

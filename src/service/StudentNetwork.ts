@@ -56,7 +56,9 @@ export class StudentNetworkService {
 
   /**
    * 新增或更新單一學生的 MAC/IP。
-   * - 根據 IP / MAC 衝突或裝置更換，回傳對應的 alert 資訊。
+   * - 保留反作弊檢查（IP/MAC 衝突、異裝置）。
+   * - 僅當資料庫欄位為 null 時才寫入本次傳入的 IP/MAC；不覆寫既有值。
+   * - 不會自行新增資料，若學生不存在則拋出錯誤。
    */
   async addOrUpdateStudentNetwork(params: {
     studentID: string;
@@ -66,7 +68,12 @@ export class StudentNetworkService {
   }): Promise<{ record: StudentNetwork; alertResult: AlertResult }> {
     const { studentID, name, macAddress, ipAddress } = params;
     const existing = await this.model.findOne({ where: { studentID } });
-    const psk = existing?.pskKey ?? this.generatePsk();
+
+    if (!existing) {
+      throw new Error(`student ${studentID} not found; no record created`);
+    }
+
+    const psk = existing.pskKey ?? this.generatePsk();
 
     // 找出與他人重複使用的 IP / MAC
     const conflictIpUser = await this.model.findOne({
@@ -97,67 +104,54 @@ export class StudentNetworkService {
         messeage: `mac already used by user ${conflictMacUser.studentID}`,
       };
     } else if (
-      existing &&
-      ((existing.ipAddress && existing.ipAddress !== ipAddress) ||
-        (existing.macAddress && existing.macAddress !== macAddress))
+      (existing.ipAddress && existing.ipAddress !== ipAddress) ||
+      (existing.macAddress && existing.macAddress !== macAddress)
     ) {
       alertResult = {
         alert: true,
         type: "using different device",
         messeage: `${studentID} is using another device`,
       };
-    } else if (
-      existing &&
-      existing.ipAddress === null &&
-      existing.macAddress === null
-    ) {
-      alertResult = {
-        alert: false,
-        type: "update Info",
-        messeage: "successfully update user's devices",
-      };
-    } else if (
-      existing &&
-      existing.ipAddress === ipAddress &&
-      existing.macAddress === macAddress
-    ) {
-      alertResult = {
-        alert: false,
-        type: "no alert detected",
-        messeage: "no alert",
-      };
     }
 
-    // upsert 資料
-    const record = await this.model.upsert(
-      {
-        studentID,
-        name,
-        macAddress,
-        ipAddress,
-        pskKey: psk,
-        isGetKey: existing?.isGetKey ?? false,
-      },
-      { returning: true }
-    );
-    const saved = Array.isArray(record) ? record[0] : record;
+    // 僅當欄位為 null 時才更新為本次輸入的 IP/MAC
+    const updates: Partial<StudentNetwork> = {};
+    if (existing.ipAddress === null && ipAddress) {
+      updates.ipAddress = ipAddress;
+    }
+    if (existing.macAddress === null && macAddress) {
+      updates.macAddress = macAddress;
+    }
+    if (name && name !== existing.name) {
+      updates.name = name;
+    }
+    // 維持既有 psk / isGetKey，不自動重置
+    updates.pskKey = psk;
+    updates.isGetKey = existing.isGetKey ?? false;
 
-    // 若首次新增資料且尚未有 alertResult，標記為 update Info
-    if (!alertResult && !existing) {
-      alertResult = {
-        alert: false,
-        type: "update Info",
-        messeage: "successfully update user's devices",
-      };
+    let saved = existing;
+    if (Object.keys(updates).length > 0) {
+      saved = await existing.update(updates);
     }
 
-    // 預設保底：若前面皆未命中，視為無警示
+    // 若未產生 alert，根據是否有實際更新給予提示
     if (!alertResult) {
-      alertResult = {
-        alert: false,
-        type: "no alert detected",
-        messeage: "no alert",
-      };
+      if (
+        (existing.ipAddress === null && updates.ipAddress) ||
+        (existing.macAddress === null && updates.macAddress)
+      ) {
+        alertResult = {
+          alert: false,
+          type: "update Info",
+          messeage: "successfully update user's devices",
+        };
+      } else {
+        alertResult = {
+          alert: false,
+          type: "no alert detected",
+          messeage: "no alert",
+        };
+      }
     }
 
     return { record: saved, alertResult };

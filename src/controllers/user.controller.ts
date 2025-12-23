@@ -7,7 +7,7 @@ import scoreBoardService from "../service/ScoreBoardService";
 import userLogService from "../service/UserLogService";
 import socketService from "../socket/SocketService";
 import studentNetworkService from "../service/StudentNetwork";
-import { antiCheatMiddleware } from "middlewares/requestGuards";
+import { antiCheatMiddleware } from "../middlewares/requestGuards";
 import antiCheatService from "../service/AntiCheatService";
 
 export const PROJECT_ROOT = path.join(__dirname, "..");
