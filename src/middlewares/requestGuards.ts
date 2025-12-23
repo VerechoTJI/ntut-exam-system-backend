@@ -27,6 +27,11 @@ const extractIp = (req: Request) =>
 export const validateStudentAndMac = asyncHandler(async (req, res, next) => {
     if (req.path === "/status" || req.path === "/get-config") return next();
 
+    if (req.path === "/user-action-logger" &&
+        (req.body?.studentID === "unknown" || req.body?.studentID === "")) {
+        return next();
+    }
+
     const studentID = extractStudentId(req);
     const mac = extractMac(req);
 
