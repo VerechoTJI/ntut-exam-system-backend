@@ -109,7 +109,6 @@ router.post(
 router.post(
   "/user-action-logger",
   validateStudentAndMac,
-  antiCheatMiddleware,
   asyncHandler(userActionLogger)
 );
 

@@ -192,6 +192,12 @@ export class ScoreBoardService {
     // console.dir(result, { depth: null, colors: true });
     return result;
   }
+  async isStudentExist(studentID: string) {
+    const student = await ScoreBoard.findOne({
+      where: { student_ID: studentID },
+    });
+    return !!student;
+  }
 }
 const scoreBoardService = new ScoreBoardService();
 export default scoreBoardService;
