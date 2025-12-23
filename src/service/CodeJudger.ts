@@ -5,7 +5,6 @@ import codeStorage from "./CodeStorage";
 import piston from "../utilities/piston";
 // import piston from "piston-client";
 import path from "path";
-import { serve } from "swagger-ui-express";
 import scoreBoardService from "./ScoreBoardService";
 
 const JUDGER_URL = process.env.JUDGER_URL || "http://localhost:2000";

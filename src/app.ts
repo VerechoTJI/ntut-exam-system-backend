@@ -1,7 +1,5 @@
 import express from "express";
 const pathToSwaggerUi = require("swagger-ui-dist").absolutePath();
-import swaggerJSDoc from "swagger-jsdoc";
-import swaggerUI from "swagger-ui-express";
 import cors from "cors";
 import session from "express-session";
 import adminAPI from "./routes/adminApi";
