@@ -8,6 +8,7 @@ import systemSettingsService from "../service/SystemSettingsServices";
 import scoreBoardService from "../service/ScoreBoardService";
 import userLogService from "../service/UserLogService";
 import alertLogService from "../service/ViolationLogService";
+import violationLogService from "../service/ViolationLogService";
 
 const UPLOAD_DIR = path.join(__dirname, "..", "upload");
 const ZIP_EXTENSION = ".zip";
@@ -106,10 +107,10 @@ export const getAllStudentScores = async (_req: Request, res: Response) => {
 };
 
 export const updateAlertList = async (_req: Request, res: Response) => {
-  const alerts = await userLogService.checkSecurityAlerts();
-  const createdAlerts = await alertLogService.addFromAlerts(alerts);
-  await alertLogService.resetCooldown(true);
-  res.json({ success: true, data: { createdAlerts } });
+  // const alerts = await userLogService.checkSecurityAlerts();
+  // const createdAlerts = await alertLogService.addFromAlerts(alerts);
+  // await alertLogService.resetCooldown(true);
+  res.json({ success: true, data: null });
 };
 
 export const getAlertLogs = async (_req: Request, res: Response) => {
@@ -126,7 +127,7 @@ export const setAlertOkStatus = async (req: Request, res: Response) => {
   }
 
   const { id, isOk } = req.body;
-  const success = await alertLogService.setOkStatus(id, isOk);
+  const success = await violationLogService.setOkStatus(id, isOk);
   res.json({
     success,
     data: {

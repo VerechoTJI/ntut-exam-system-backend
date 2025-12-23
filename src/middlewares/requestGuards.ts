@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import antiCheatService from "../service/AntiCheatService";
 import { sanitizeStudentID } from "../controllers/user.controller";
+import scoreBoardService from "../service/ScoreBoardService";
 
 /** Simple async wrapper to avoid repeating try/catch in middleware */
 const asyncHandler =
@@ -28,6 +29,15 @@ export const validateStudentAndMac = asyncHandler(async (req, res, next) => {
 
     const studentID = extractStudentId(req);
     const mac = extractMac(req);
+
+    const isExist = await scoreBoardService.isStudentExist(studentID);
+
+    console.log("isExist:", isExist);
+    if (!isExist) {
+        return res
+            .status(400)
+            .json({ success: false, message: "Student ID does not exist" });
+    }
 
     if (!studentID || sanitizeStudentID(studentID) !== studentID) {
         return res

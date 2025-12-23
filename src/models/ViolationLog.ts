@@ -22,7 +22,7 @@ export class ViolationLog extends Model<ViolationLog> {
 
   @Index
   @Column({ field: "student_id", type: DataType.STRING, allowNull: false })
-  studentId!: string;
+  student_id!: string;
 
   @Column({ field: "time", type: DataType.DATE, allowNull: false })
   time!: Date;

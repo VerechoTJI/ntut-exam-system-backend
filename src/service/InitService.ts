@@ -1,17 +1,19 @@
-import { ScoreBoard } from "../models/ScoreBoard";
-import { Sequelize } from "sequelize-typescript";
 import { sequelize } from "../config/database"; // 引入我們建立的連線實例
+import { ScoreBoard } from "../models/ScoreBoard";
 import { UserActionLog } from "../models/UserActionLog";
 import { SystemSettings } from "../models/SystemSettings";
 import { ViolationLog } from "../models/ViolationLog";
+import { StudentNetwork } from "../models/StudentNetwork";
 import studentNetworkService from "./StudentNetwork";
+import { SystemSettingsService } from "./SystemSettingsServices";
+
 import {
   TestConfig,
   ClientStudentInformation,
   PuzzleConfig,
   StudentInfo,
 } from "../types/InitService";
-import { SystemSettingsService } from "./SystemSettingsServices";
+
 
 export class InitService {
   async initialize(
@@ -125,6 +127,14 @@ export class InitService {
 
       // 4. 清除警示日誌
       await ViolationLog.destroy({
+        where: {},
+        truncate: true,
+        cascade: true,
+        transaction: t,
+      });
+
+      // 5. 清除學生網路資料
+      await StudentNetwork.destroy({
         where: {},
         truncate: true,
         cascade: true,

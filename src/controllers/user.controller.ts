@@ -7,6 +7,8 @@ import scoreBoardService from "../service/ScoreBoardService";
 import userLogService from "../service/UserLogService";
 import socketService from "../socket/SocketService";
 import studentNetworkService from "../service/StudentNetwork";
+import { antiCheatMiddleware } from "middlewares/requestGuards";
+import antiCheatService from "../service/AntiCheatService";
 
 export const PROJECT_ROOT = path.join(__dirname, "..");
 export const UPLOAD_DIR = path.join(PROJECT_ROOT, "upload");
@@ -147,7 +149,7 @@ export const userActionLogger = async (req: Request, res: Response) => {
     req.body?.details
   );
 
-  await userLogService.createLog({
+  await antiCheatService.logWithAntiCheat({
     student_ID: studentID,
     ip_address: userIP,
     mac_address: mac,

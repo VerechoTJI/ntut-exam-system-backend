@@ -32,7 +32,7 @@ export class ViolationLogService {
 
         const existing = await this.model.findOne({
             where: {
-                studentId,
+                student_id: studentId,
                 type,
                 messeage,
                 isOk: false,
@@ -45,7 +45,7 @@ export class ViolationLogService {
         }
 
         const created = await this.model.create({
-            studentId,
+            student_id: studentId,
             ipAddress,
             type,
             messeage,
@@ -56,10 +56,10 @@ export class ViolationLogService {
     }
 
     /** Mark a record as ok by id. */
-    async setOkStatus(id: number): Promise<ViolationLog | null> {
+    async setOkStatus(id: number, isOk: boolean): Promise<ViolationLog | null> {
         const record = await this.model.findByPk(id);
         if (!record) return null;
-        await record.update({ isOk: true });
+        await record.update({ isOk: isOk });
         return record;
     }
 
@@ -76,7 +76,7 @@ export class ViolationLogService {
     /** Get all records for a given studentId. */
     async getByStudentId(studentId: string): Promise<ViolationLog[]> {
         return await this.model.findAll({
-            where: { studentId },
+            where: { student_id: studentId },
             order: [["time", "DESC"]],
         });
     }

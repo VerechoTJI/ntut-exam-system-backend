@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { StudentNetwork } from "../models/StudentNetwork";
 import userLogService, { type CreateLogInput } from "./UserLogService";
+import { Op } from 'sequelize';
 
 class LoggerDeps {
   async createLog(data: CreateLogInput): Promise<any> {
@@ -69,10 +70,10 @@ export class StudentNetworkService {
 
     // 找出與他人重複使用的 IP / MAC
     const conflictIpUser = await this.model.findOne({
-      where: { ipAddress, studentID: { ["$ne"]: studentID as any } },
+      where: { ipAddress, studentID: { [Op.ne]: studentID as any } },
     });
     const conflictMacUser = await this.model.findOne({
-      where: { macAddress, studentID: { ["$ne"]: studentID as any } },
+      where: { macAddress, studentID: { [Op.ne]: studentID as any } },
     });
 
     let alertResult: AlertResult | null = null;
