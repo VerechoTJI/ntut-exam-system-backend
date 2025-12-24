@@ -7,7 +7,6 @@ import { judgeAllCodeInStorage } from "../service/CodeJudger";
 import systemSettingsService from "../service/SystemSettingsServices";
 import scoreBoardService from "../service/ScoreBoardService";
 import userLogService from "../service/UserLogService";
-import alertLogService from "../service/ViolationLogService";
 import violationLogService from "../service/ViolationLogService";
 
 const UPLOAD_DIR = path.join(__dirname, "..", "upload");
@@ -114,7 +113,7 @@ export const updateAlertList = async (_req: Request, res: Response) => {
 };
 
 export const getAlertLogs = async (_req: Request, res: Response) => {
-  const result = await alertLogService.getAll();
+  const result = await violationLogService.getAll();
   res.json({ success: true, data: { result } });
 };
 
@@ -141,4 +140,28 @@ export const setAlertOkStatus = async (req: Request, res: Response) => {
 export const getAllLogs = async (_req: Request, res: Response) => {
   const result = await userLogService.getAllLogs();
   res.json({ success: true, data: { result } });
+};
+
+export const updateConfigAvailability = async (req: Request, res: Response) => {
+  const { available } = req.body;
+  if (available === undefined) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing 'available' query parameter" });
+  }
+
+  const isSuccess = await systemSettingsService.updateConfigAvailability(
+    Boolean(available)
+  );
+  if (!isSuccess) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update config availability",
+    });
+  }
+
+  res.json({
+    success: true,
+    data: { message: "Config availability updated", currentStatus: available },
+  });
 };
