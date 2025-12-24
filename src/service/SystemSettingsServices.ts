@@ -49,7 +49,7 @@ export class SystemSettingsService {
       return false;
     }
     const userInfo = studentList.find((user) => user.student_ID === studentID);
-    return userInfo
+    return userInfo;
   }
   async updateConfigAvailability(available: boolean) {
     const config = await this.getConfig();
@@ -59,9 +59,15 @@ export class SystemSettingsService {
     }
     const availability = await this.getSetting("config_availability");
     if (availability === null) {
-      await this.createSetting("config_availability", JSON.stringify(available));
+      await this.createSetting(
+        "config_availability",
+        JSON.stringify(available)
+      );
     } else {
-      await this.updateSetting("config_availability", JSON.stringify(available));
+      await this.updateSetting(
+        "config_availability",
+        JSON.stringify(available)
+      );
     }
     console.log(`✅ Config availability updated to ${available}`);
     return true;

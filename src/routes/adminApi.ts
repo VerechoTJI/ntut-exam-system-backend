@@ -11,6 +11,7 @@ import {
   getAlertLogs,
   setAlertOkStatus,
   getAllLogs,
+  updateConfigAvailability,
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -32,5 +33,9 @@ router.get("/update-alert-list", asyncHandler(updateAlertList));
 router.get("/get-alert-logs", asyncHandler(getAlertLogs));
 router.post("/set-alert-ok-status", asyncHandler(setAlertOkStatus));
 router.get("/get-all-logs", asyncHandler(getAllLogs));
+router.post(
+  "/toggle-config-availability",
+  asyncHandler(updateConfigAvailability)
+);
 
 export default router;
