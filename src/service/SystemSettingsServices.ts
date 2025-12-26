@@ -72,6 +72,13 @@ export class SystemSettingsService {
     console.log(`✅ Config availability updated to ${available}`);
     return true;
   }
+  async getConfigAvailability(): Promise<boolean | null> {
+    const availability = await this.getSetting("config_availability");
+    if (availability === null) {
+      return null;
+    }
+    return JSON.parse(availability) as boolean;
+  }
   async createSetting(name: string, value: string) {
     try {
       // 檢查是否已存在 (為了避免重複建立，先查一次是比較安全的作法)
