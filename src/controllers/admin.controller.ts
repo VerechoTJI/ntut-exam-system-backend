@@ -165,3 +165,9 @@ export const updateConfigAvailability = async (req: Request, res: Response) => {
     data: { message: "Config availability updated", currentStatus: available },
   });
 };
+
+export const getConfigAvailability = async (_req: Request, res: Response) => {
+  const isAvailable = await systemSettingsService.getConfigAvailability();
+  res.json({ success: true, data: { isAvailable } });
+};
+
