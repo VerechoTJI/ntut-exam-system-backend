@@ -5,7 +5,7 @@ import { SystemSettings } from "../models/SystemSettings";
 import { ViolationLog } from "../models/ViolationLog";
 import { StudentNetwork } from "../models/StudentNetwork";
 import studentNetworkService from "./StudentNetwork";
-import { SystemSettingsService } from "./SystemSettingsServices";
+import systemSettingsService, { SystemSettingsService } from "./SystemSettingsServices";
 
 import {
   TestConfig,
@@ -30,10 +30,11 @@ export class InitService {
     const response3 = await new SystemSettingsService().saveStudentList(
       students
     );
-    const response4 = await studentNetworkService.initializeStudents(
+    const response4 = await systemSettingsService.updateConfigAvailability(true);
+    const response5 = await studentNetworkService.initializeStudents(
       studentList
     );
-    return response1 && response2 && response3 && response4;
+    return response1 && response2 && response3 && response4 && response5;
   }
 
   async initializeTheDatabase(

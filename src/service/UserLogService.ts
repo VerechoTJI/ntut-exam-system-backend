@@ -101,6 +101,17 @@ export class UserLogService {
       throw error;
     }
   }
+  async getLastNLogs(n: number) {
+    try {
+      return await UserActionLog.findAll({
+        order: [["timestamp", "DESC"]],
+        limit: n,
+      });
+    } catch (error) {
+      console.error("❌ Get last N logs failed:", error);
+      throw error;
+    }
+  }
 }
 
 const userLogService = new UserLogService();

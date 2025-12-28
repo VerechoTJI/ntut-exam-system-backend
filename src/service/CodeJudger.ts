@@ -131,9 +131,11 @@ export async function judgeSingleCode(
   if (!Array.isArray(testCases) || testCases.length === 0) {
     throw new Error("testCases 必須是非空陣列");
   }
+
+  const config = await systemSettingsService.getConfig();
   const language = options?.language ?? "python";
   const version = options?.version ?? "3.12.0";
-  const runTimeoutMs = options?.runTimeoutMs ?? 10000;
+  const runTimeoutMs = options?.runTimeoutMs ?? (config.maxExecutionTime ?? 25000); // 25 秒
   const runMemoryKb = options?.runMemoryKb ?? 100_000; // 256MB
   const args = options?.args ?? [];
   const mainFileName =

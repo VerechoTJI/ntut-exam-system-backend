@@ -41,6 +41,7 @@ export interface TestConfig {
   description: string;
   publicKey: string;
   remoteHost: string;
+  maxExecutionTime: number; // in milliseconds
   accessableUsers: AccessableUser[];
   testTime: TestTime;
   puzzles: PuzzleConfig[];

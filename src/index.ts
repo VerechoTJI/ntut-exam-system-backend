@@ -10,7 +10,7 @@ import { connectDB } from "./config/database";
 })();
 
 // 對外的 user server
-const USER_PORT = Number(process.env.USER_PORT) || 3001;
+export const USER_PORT = Number(process.env.USER_PORT) || 3001;
 const userServer = http.createServer(userApp);
 
 userServer.listen(USER_PORT, "0.0.0.0", () => {

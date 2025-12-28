@@ -27,6 +27,14 @@ export const status = async (_req: Request, res: Response) => {
 };
 
 export const getConfig = async (_req: Request, res: Response) => {
+  const configAvailibility = await systemSettingsService.getConfigAvailability();
+  if (!configAvailibility) {
+    return res
+      .status(500)
+      .json(
+        { success: false, message: "Config not available at the moment." }
+      );
+  }
   const config = await systemSettingsService.getConfig();
   if (!config) {
     return res
