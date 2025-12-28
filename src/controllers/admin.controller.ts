@@ -8,6 +8,8 @@ import systemSettingsService from "../service/SystemSettingsServices";
 import scoreBoardService from "../service/ScoreBoardService";
 import userLogService from "../service/UserLogService";
 import violationLogService from "../service/ViolationLogService";
+import os from "os";
+import { USER_PORT } from "../index";
 
 const UPLOAD_DIR = path.join(__dirname, "..", "upload");
 const ZIP_EXTENSION = ".zip";
@@ -138,7 +140,7 @@ export const setAlertOkStatus = async (req: Request, res: Response) => {
 };
 
 export const getAllLogs = async (_req: Request, res: Response) => {
-  const result = await userLogService.getAllLogs();
+  const result = await userLogService.getLastNLogs(70);
   res.json({ success: true, data: { result } });
 };
 
@@ -171,3 +173,57 @@ export const getConfigAvailability = async (_req: Request, res: Response) => {
   res.json({ success: true, data: { isAvailable } });
 };
 
+
+export const getStudentsCodes = async (req: Request, res: Response) => {
+  const { studentID } = req.body;
+  const result = await codeStorage.getAllZipFiles(UPLOAD_DIR);
+  const isInSubmissions = result.includes(`${studentID}`);
+
+  if (
+    !studentID ||
+    typeof studentID !== "string" ||
+    !isSafeStudentId(studentID) || !isInSubmissions
+  ) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid studentID" });
+  }
+
+  const safeStudentID = path.basename(studentID);
+  const zipDir = UPLOAD_DIR;
+
+  try {
+    const codes = await codeStorage.getStudentsCodes(safeStudentID, zipDir);
+    console.log("Retrieved codes:", codes);
+    res.json({ success: true, data: { ...codes } });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to retrieve student codes" });
+  }
+};
+
+
+export const getHostUserUrl = async (_req: Request, res: Response) => {
+  const networkInterfaces = os.networkInterfaces();
+  // 遍歷所有網絡接口並找出內網 IP 地址
+  function getLocalIp() {
+    for (const interfaceName in networkInterfaces) {
+      for (const interfaceInfo of networkInterfaces[interfaceName]) {
+        // 檢查是否是 IPv4 地址並且是內網地址
+        if (interfaceInfo.family === 'IPv4' && !interfaceInfo.internal) {
+          return interfaceInfo.address;
+        }
+      }
+    }
+    return null; // 如果沒有找到內網 IP
+  }
+  const localIp = getLocalIp();
+  if (!localIp) {
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to retrieve local IP address", data: { url: null } });
+  }
+  const url = `http://${localIp}:${USER_PORT}`;
+  res.json({ success: true, data: { url } });
+};

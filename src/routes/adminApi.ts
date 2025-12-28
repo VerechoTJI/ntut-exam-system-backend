@@ -12,6 +12,9 @@ import {
   setAlertOkStatus,
   getAllLogs,
   updateConfigAvailability,
+  getConfigAvailability,
+  getStudentsCodes,
+  getHostUserUrl
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -19,8 +22,8 @@ const router = Router();
 // 通用 async handler
 const asyncHandler =
   (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) =>
-  (req: Request, res: Response, next: NextFunction) =>
-    Promise.resolve(fn(req, res, next)).catch(next);
+    (req: Request, res: Response, next: NextFunction) =>
+      Promise.resolve(fn(req, res, next)).catch(next);
 
 router.get("/heartbeat", asyncHandler(heartbeat));
 router.post("/init", asyncHandler(init));
@@ -33,9 +36,13 @@ router.get("/update-alert-list", asyncHandler(updateAlertList));
 router.get("/get-alert-logs", asyncHandler(getAlertLogs));
 router.post("/set-alert-ok-status", asyncHandler(setAlertOkStatus));
 router.get("/get-all-logs", asyncHandler(getAllLogs));
+router.get("/get-config-availability", asyncHandler(getConfigAvailability));
 router.post(
   "/toggle-config-availability",
   asyncHandler(updateConfigAvailability)
 );
+
+router.post("/get-student-codes", asyncHandler(getStudentsCodes));
+router.get("/get-host-user-url", asyncHandler(getHostUserUrl));
 
 export default router;

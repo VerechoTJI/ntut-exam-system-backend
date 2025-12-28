@@ -47,8 +47,7 @@ class CodeStorage {
       return filePaths;
     } catch (err) {
       throw new Error(
-        `Failed to read zip file: ${
-          (err && (err as Error).message) || String(err)
+        `Failed to read zip file: ${(err && (err as Error).message) || String(err)
         }`
       );
     }
@@ -91,6 +90,35 @@ class CodeStorage {
         })
         .on("error", reject);
     });
+  }
+
+  async getStudentsCodes(
+    studentID: string,
+    zipDir: string
+  ): Promise<{ codeList: string[]; codeOBJ: Record<string, string> } | []> {
+    const zipFilePath = path.join(zipDir, `${studentID}.zip`);
+    try {
+      let codeOBJ = {};
+      const fileList = await this.listFilesInZip(zipFilePath);
+      for (const filePath of fileList) {
+        const code = await this.unzipGetFileAsString(
+          zipFilePath,
+          filePath,
+          "utf8"
+        );
+        codeOBJ[filePath] = code;
+      }
+      return {
+        codeList: fileList,
+        codeOBJ: codeOBJ
+      }
+    } catch (error) {
+      console.error(
+        `Error retrieving code files for student ${studentID}:`,
+        error
+      );
+      return [];
+    }
   }
 }
 const codeStorage = new CodeStorage();
