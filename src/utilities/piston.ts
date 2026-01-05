@@ -100,6 +100,8 @@ export const piston = (opts: any = {}) => {
       const latestVersion = (runtimes.filter(n => n.language === language).sort((a, b) => {
         return a.version > b.version ? -1 : b.version > a.version ? 1 : 0;
       })[0] || {}).version;
+      // console.log(config.run_timeout)
+      // console.log(or(config.runTimeout, 3000))
 
       const boilerplate = {
         "language": language,
@@ -110,7 +112,7 @@ export const piston = (opts: any = {}) => {
         "stdin": or(config.stdin, ""),
         "args": or(config.args, ["1", "2", "3"]),
         "compile_timeout": or(config.compileTimeout, 10000),
-        "run_timeout": or(config.runTimeout, 3000),
+        "run_timeout": or(config.run_timeout, 3000),
         "compile_memory_limit": or(config.compileMemoryLimit, -1),
         "run_memory_limit": or(config.runMemoryLimit, -1)
       }
