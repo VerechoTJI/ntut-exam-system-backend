@@ -37,7 +37,6 @@ export const validateStudentAndMac = asyncHandler(async (req, res, next) => {
 
     const isExist = await scoreBoardService.isStudentExist(studentID);
 
-    console.log("isExist:", isExist);
     if (!isExist) {
         return res
             .status(400)
