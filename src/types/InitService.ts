@@ -16,11 +16,6 @@ export interface PuzzleConfig {
   language: string;
   testCases: TestGroup[];
 }
-export interface StudentInfo {
-  student_ID: string;
-  name: string;
-}
-
 // ----
 
 // Test time settings

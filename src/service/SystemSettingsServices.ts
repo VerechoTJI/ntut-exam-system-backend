@@ -1,6 +1,6 @@
 import { Config } from "sequelize/types/sequelize";
 import { SystemSettings } from "../models/SystemSettings";
-import { TestConfig, StudentInfo } from "../types/InitService";
+import { ExamConfig, AccessUser } from "../schemas/config.schemas";
 
 export class SystemSettingsService {
   /**
@@ -9,7 +9,7 @@ export class SystemSettingsService {
    * 或是重複建立 (如果沒有 unique constraint)。
    * 建議在 SystemSettings Model 的 name 欄位加上 unique: true
    */
-  async saveConfig(value: TestConfig) {
+  async saveConfig(value: ExamConfig) {
     // check if config already exists
     const existing = await SystemSettings.findOne({
       where: { name: "config" },
@@ -19,14 +19,14 @@ export class SystemSettingsService {
     }
     return await this.createSetting("config", JSON.stringify(value));
   }
-  async getConfig(): Promise<TestConfig | null> {
+  async getConfig(): Promise<ExamConfig | null> {
     const setting = await this.getSetting("config");
     if (setting) {
-      return JSON.parse(setting) as TestConfig;
+      return JSON.parse(setting) as ExamConfig;
     }
     return null;
   }
-  async saveStudentList(value: StudentInfo[]) {
+  async saveStudentList(value: AccessUser[]) {
     // check if student_list already exists
     const existing = await SystemSettings.findOne({
       where: { name: "student_list" },
@@ -36,19 +36,19 @@ export class SystemSettingsService {
     }
     return await this.createSetting("student_list", JSON.stringify(value));
   }
-  async getStudentList(): Promise<StudentInfo[] | null> {
+  async getStudentList(): Promise<AccessUser[] | null> {
     const setting = await this.getSetting("student_list");
     if (setting) {
-      return JSON.parse(setting) as StudentInfo[];
+      return JSON.parse(setting) as AccessUser[];
     }
     return null;
   }
-  async getStudentInfo(studentID: string): Promise<StudentInfo | false> {
+  async getStudentInfo(studentID: string): Promise<AccessUser | false> {
     const studentList = await this.getStudentList();
     if (!studentList) {
       return false;
     }
-    const userInfo = studentList.find((user) => user.student_ID === studentID);
+    const userInfo = studentList.find((user) => user.id === studentID);
     return userInfo;
   }
   async updateConfigAvailability(available: boolean) {
@@ -61,12 +61,12 @@ export class SystemSettingsService {
     if (availability === null) {
       await this.createSetting(
         "config_availability",
-        JSON.stringify(available)
+        JSON.stringify(available),
       );
     } else {
       await this.updateSetting(
         "config_availability",
-        JSON.stringify(available)
+        JSON.stringify(available),
       );
     }
     console.log(`✅ Config availability updated to ${available}`);
@@ -104,7 +104,7 @@ export class SystemSettingsService {
     try {
       const [affectedCount] = await SystemSettings.update(
         { value },
-        { where: { name } }
+        { where: { name } },
       );
 
       if (affectedCount === 0) {

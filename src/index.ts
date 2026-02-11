@@ -4,6 +4,9 @@ import userApp from "./user-app";
 import adminApp from "./admin-app";
 import socketService from "./socket/SocketService";
 import { connectDB } from "./config/database";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 (async () => {
   await connectDB();

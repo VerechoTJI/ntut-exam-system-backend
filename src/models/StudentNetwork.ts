@@ -28,10 +28,4 @@ export class StudentNetwork extends Model<StudentNetwork> {
 
   @Column({ type: DataType.STRING, allowNull: true, field: "ip_address" })
   ipAddress!: string | null;
-
-  @Column({ type: DataType.STRING, allowNull: false, field: "psk_key" })
-  pskKey!: string;
-
-  @Column({ type: DataType.BOOLEAN, allowNull: false, field: "is_get_key", defaultValue: false })
-  isGetKey!: boolean;
 }

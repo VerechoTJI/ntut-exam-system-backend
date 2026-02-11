@@ -48,15 +48,19 @@ class CodeStorage {
     } catch (err) {
       throw new Error(
         `Failed to read zip file: ${(err && (err as Error).message) || String(err)
-        }`
+        }`,
       );
     }
   }
 
+  getFileNameWithoutExt(filePath: string): string {
+    if (!filePath) return "";
+    return path.basename(filePath, path.extname(filePath));
+  }
   async unzipGetFileAsString(
     zipFilePath: string,
-    targetPath: string,
-    encoding: BufferEncoding = "utf8"
+    targetFilePathInZip: string,
+    encoding: BufferEncoding = "utf8",
   ): Promise<string> {
     return new Promise((resolve, reject) => {
       let found = false;
@@ -66,7 +70,7 @@ class CodeStorage {
         .pipe(unzipper.Parse())
         .on("entry", async (entry: any) => {
           const { path: entryPath, type } = entry;
-          if (type === "File" && entryPath === targetPath) {
+          if (type === "File" && entryPath === targetFilePathInZip) {
             found = true;
             try {
               const chunks: Buffer[] = [];
@@ -86,7 +90,9 @@ class CodeStorage {
         })
         .on("close", () => {
           if (!found)
-            reject(new Error(`Target file not found in zip: ${targetPath}`));
+            reject(
+              new Error(`Target file not found in zip: ${targetFilePathInZip}`),
+            );
         })
         .on("error", reject);
     });
@@ -94,28 +100,28 @@ class CodeStorage {
 
   async getStudentsCodes(
     studentID: string,
-    zipDir: string
+    zipDir: string,
   ): Promise<{ codeList: string[]; codeOBJ: Record<string, string> } | []> {
     const zipFilePath = path.join(zipDir, `${studentID}.zip`);
     try {
-      let codeOBJ = {};
+      let codeOBJ: Record<string, string> = {};
       const fileList = await this.listFilesInZip(zipFilePath);
       for (const filePath of fileList) {
         const code = await this.unzipGetFileAsString(
           zipFilePath,
           filePath,
-          "utf8"
+          "utf8",
         );
         codeOBJ[filePath] = code;
       }
       return {
         codeList: fileList,
-        codeOBJ: codeOBJ
-      }
+        codeOBJ: codeOBJ,
+      };
     } catch (error) {
       console.error(
         `Error retrieving code files for student ${studentID}:`,
-        error
+        error,
       );
       return [];
     }

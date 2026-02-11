@@ -7,7 +7,6 @@ import {
     AutoIncrement,
     Index,
 } from "sequelize-typescript";
-import { Col } from "sequelize/types/utils";
 
 @Table({
     tableName: "user_crypto_keys",
@@ -28,7 +27,7 @@ export class UserCryptoKey extends Model<UserCryptoKey> {
         defaultValue: DataType.NOW,
         field: "created_at",
     })
-    createdAt!: Date;
+    declare createdAt: Date;
 
     @Column({
         type: DataType.STRING,
@@ -47,14 +46,15 @@ export class UserCryptoKey extends Model<UserCryptoKey> {
     @Column({
         type: DataType.STRING,
         allowNull: false,
-        field: "ip_address",
-    })
-    ipAddress!: string;
-
-    @Column({
-        type: DataType.STRING,
-        allowNull: false,
         field: "user_session_id",
     })
     userSessionID!: string;
+
+    @Column({
+        type: DataType.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+        field: "is_active",
+    })
+    isActive!: boolean;
 }

@@ -1,39 +1,27 @@
 {
-  "compileOnSave": false,
   "compilerOptions": {
-    "target": "es2017",
-    "lib": ["es2017", "esnext.asynciterable", "dom"],  // 加上 "dom"
-    "typeRoots": ["node_modules/@types"],
-    "allowSyntheticDefaultImports": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
-    "module": "commonjs",
-    "pretty": true,
-    "sourceMap": true,
-    "declaration": true,
-    "outDir": "dist",
-    "allowJs": true,
-    "noEmit": false,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "importHelpers": true,
-    "baseUrl": "src",
-    "paths": {
-      "@/": [""],
-      "@config": ["config"],
-      "@controllers/": ["controllers/"],
-      "@dtos/": ["dtos/"],
-      "@exceptions/": ["exceptions/"],
-      "@interfaces/": ["interfaces/"],
-      "@middlewares/": ["middlewares/"],
-      "@models/": ["models/"],
-      "@routes/": ["routes/"],
-      "@services/": ["services/"],
-      "@utils/": ["utils/"]
-    }
+    /* 基礎環境設定 */
+    "target": "ES2022" /* 建議使用較現代的 ES 版本，支援 async/await */,
+    "module": "NodeNext" /* 為了配合現代 Node.js 的模組解析機制 */,
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "rootDir": "src" /* 原始碼位置 */,
+    "outDir": "dist" /* 編譯後的 JS 存放位置 */,
+    "removeComments": true /* 減少編譯後的檔案大小 */,
+    "sourceMap": true /* 除錯時能對應回 TS 原始碼 */,
+
+    /* 強度檢查 (建議開啟以減少 Bug) */
+    "strict": true /* 開啟所有嚴格檢查 */,
+    "noImplicitAny": true /* 防止隱式的 any 型別 */,
+    "strictPropertyInitialization": false /* Sequelize 模型通常不需要強制初始值 */,
+    "esModuleInterop": true /* 確保相容 CommonJS 模組 (如 express) */,
+    "skipLibCheck": true /* 加快編譯速度，跳過套件的型別檢查 */,
+    "forceConsistentCasingInFileNames": true /* 防止 Windows 與 Linux 的檔名大小寫陷阱 */,
+
+    /* Sequelize-Typescript 必須開啟的關鍵設定 */
+    "experimentalDecorators": true /* 支援 @Table, @Column 等裝飾器 */,
+    "emitDecoratorMetadata": true /* 讓 Sequelize 能透過反射讀取型別 */
   },
-  "include": ["src/**/*.ts", "src/**/*.json", ".env"],
-  "exclude": ["node_modules", "src/http", "src/logs"]
+  "include": ["src/**/*"] /* 包含 src 下所有檔案 */,
+  "exclude": ["node_modules", "**/*.test.ts"] /* 排除測試檔與套件 */
 }
