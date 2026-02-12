@@ -1,16 +1,16 @@
 import { PistonSubtaskReply } from "./judger.type.js";
 import { StatusCode } from "piston-judger";
 
-
-
 export interface ScoreBoardFormat {
-  [subtaskIndex: string]: {
-    hidden: TestCaseRecord[];
-    visible: TestCaseRecord[];
-  };
+  [problemID: string]: Subtasks[];
 }
 
-export interface ScoreResultFormat {
+export interface Subtasks {
+  hidden: TestCaseRecord[];
+  visible: TestCaseRecord[];
+}
+
+export interface JudgeResultSocreBoard {
   [problemID: string]: PistonSubtaskReply[];
 }
 

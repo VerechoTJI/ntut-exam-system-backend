@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
 import fs from "fs/promises";
 import path from "path";
-import { InitService } from "../service/InitService";
-import codeStorage from "../service/CodeStorage";
+import { InitService } from "../service/_InitService";
+import codeStorage from "../service/code-storage";
 import { judgeAllCodeInStorage } from "../service/CodeJudger";
-import systemSettingsService from "../service/SystemSettingsServices";
-import scoreBoardService from "../service/ScoreBoardService";
+import systemSettingsService from "../service/sys-settings.service";
+import scoreBoardService from "../service/scoreboard.service";
 import userLogService from "../service/UserLogService";
 import violationLogService from "../service/ViolationLogService";
 import os from "os";
@@ -16,7 +16,7 @@ const ZIP_EXTENSION = ".zip";
 
 export const requireFields = (obj: any, fields: string[]) => {
   const missing = fields.filter(
-    (f) => obj[f] === undefined || obj[f] === null || obj[f] === ""
+    (f) => obj[f] === undefined || obj[f] === null || obj[f] === "",
   );
   return missing;
 };
@@ -39,7 +39,7 @@ export const init = async (req: Request, res: Response) => {
 
   const ok = await initService.initialize(
     req.body.config,
-    req.body.studentList
+    req.body.studentList,
   );
 
   try {
@@ -153,7 +153,7 @@ export const updateConfigAvailability = async (req: Request, res: Response) => {
   }
 
   const isSuccess = await systemSettingsService.updateConfigAvailability(
-    Boolean(available)
+    Boolean(available),
   );
   if (!isSuccess) {
     return res.status(500).json({
@@ -173,7 +173,6 @@ export const getConfigAvailability = async (_req: Request, res: Response) => {
   res.json({ success: true, data: { isAvailable } });
 };
 
-
 export const getStudentsCodes = async (req: Request, res: Response) => {
   const { studentID } = req.body;
   const result = await codeStorage.getAllZipFiles(UPLOAD_DIR);
@@ -182,7 +181,8 @@ export const getStudentsCodes = async (req: Request, res: Response) => {
   if (
     !studentID ||
     typeof studentID !== "string" ||
-    !isSafeStudentId(studentID) || !isInSubmissions
+    !isSafeStudentId(studentID) ||
+    !isInSubmissions
   ) {
     return res
       .status(400)
@@ -203,7 +203,6 @@ export const getStudentsCodes = async (req: Request, res: Response) => {
   }
 };
 
-
 export const getHostUserUrl = async (_req: Request, res: Response) => {
   const networkInterfaces = os.networkInterfaces();
   // 遍歷所有網絡接口並找出內網 IP 地址
@@ -211,7 +210,7 @@ export const getHostUserUrl = async (_req: Request, res: Response) => {
     for (const interfaceName in networkInterfaces) {
       for (const interfaceInfo of networkInterfaces[interfaceName]) {
         // 檢查是否是 IPv4 地址並且是內網地址
-        if (interfaceInfo.family === 'IPv4' && !interfaceInfo.internal) {
+        if (interfaceInfo.family === "IPv4" && !interfaceInfo.internal) {
           return interfaceInfo.address;
         }
       }
@@ -220,9 +219,11 @@ export const getHostUserUrl = async (_req: Request, res: Response) => {
   }
   const localIp = getLocalIp();
   if (!localIp) {
-    return res
-      .status(500)
-      .json({ success: false, message: "Failed to retrieve local IP address", data: { url: null } });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve local IP address",
+      data: { url: null },
+    });
   }
   const url = `http://${localIp}:${USER_PORT}`;
   res.json({ success: true, data: { url } });

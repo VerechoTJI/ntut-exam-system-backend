@@ -1,8 +1,10 @@
 import express from "express";
 import cors from "cors";
 import session from "express-session";
-import userAPI from "./routes/userAPI";
+// import userAPI from "./routes/
+import userRoutes from "./routes/user";
 import { connectDB } from "./config/database";
+import { errorMiddleware } from "./middlewares/error-handler";
 
 const userApp = express();
 
@@ -30,7 +32,7 @@ userApp.use(
     origin: "*",
     credentials: true,
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  })
+  }),
 );
 userApp.use(express.json());
 userApp.use(
@@ -39,14 +41,18 @@ userApp.use(
     resave: false,
     saveUninitialized: true,
     cookie: { secure: false },
-  })
+  }),
 );
 
 // 對外的 user 路由
-userApp.use("/api", userAPI);
+// userApp.use("/api", userAPI);
+userApp.use("/api", userRoutes);
 
 userApp.get("/", (req, res) => {
   res.send("This is public user api server.");
 });
+
+// Error handling middleware (must be last)
+userApp.use(errorMiddleware);
 
 export default userApp;

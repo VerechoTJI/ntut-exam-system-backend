@@ -1,14 +1,7 @@
-import { Config } from "sequelize/types/sequelize";
 import { SystemSettings } from "../models/SystemSettings";
 import { ExamConfig, AccessUser } from "../schemas/config.schemas";
 
 export class SystemSettingsService {
-  /**
-   * 1. 新增一個 setting
-   * 注意：如果該 name 已存在，根據資料庫設定可能會拋出 Error (如果 name 設為 unique)
-   * 或是重複建立 (如果沒有 unique constraint)。
-   * 建議在 SystemSettings Model 的 name 欄位加上 unique: true
-   */
   async saveConfig(value: ExamConfig) {
     // check if config already exists
     const existing = await SystemSettings.findOne({
@@ -49,7 +42,7 @@ export class SystemSettingsService {
       return false;
     }
     const userInfo = studentList.find((user) => user.id === studentID);
-    return userInfo;
+    return userInfo || false;
   }
   async updateConfigAvailability(available: boolean) {
     const config = await this.getConfig();
@@ -71,6 +64,23 @@ export class SystemSettingsService {
     }
     console.log(`✅ Config availability updated to ${available}`);
     return true;
+  }
+  async updateExamStatus(started: boolean) {
+    const config = await this.getSetting("exam_status");
+    if (config === null) {
+      await this.createSetting("exam_status", JSON.stringify(started));
+    } else {
+      await this.updateSetting("exam_status", JSON.stringify(started));
+    }
+    console.log(`✅ Exam status updated to ${started}`);
+    return true;
+  }
+  async getExamStatus(): Promise<boolean | null> {
+    const status = await this.getSetting("exam_status");
+    if (status === null) {
+      return false;
+    }
+    return JSON.parse(status) as boolean;
   }
   async getConfigAvailability(): Promise<boolean | null> {
     const availability = await this.getSetting("config_availability");
@@ -96,10 +106,6 @@ export class SystemSettingsService {
       throw error;
     }
   }
-
-  /**
-   * 2. 更新一個 setting
-   */
   async updateSetting(name: string, value: string) {
     try {
       const [affectedCount] = await SystemSettings.update(
@@ -119,11 +125,6 @@ export class SystemSettingsService {
       throw error;
     }
   }
-
-  /**
-   * 3. 取得一個 setting
-   * 回傳設定的 value (字串)，若找不到則回傳 null
-   */
   async getSetting(name: string): Promise<string | null> {
     try {
       const setting = await SystemSettings.findOne({
@@ -141,10 +142,6 @@ export class SystemSettingsService {
       throw error;
     }
   }
-
-  /**
-   * 4. 刪除一個 setting
-   */
   async deleteSetting(name: string) {
     try {
       const deletedCount = await SystemSettings.destroy({

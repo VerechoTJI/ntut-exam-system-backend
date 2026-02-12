@@ -1,3 +1,5 @@
+// refactor finished
+
 import { sequelize } from "../config/database"; // 引入我們建立的連線實例
 import { ScoreBoard } from "../models/ScoreBoard";
 import { UserActionLog } from "../models/UserActionLog";
@@ -5,7 +7,9 @@ import { SystemSettings } from "../models/SystemSettings";
 import { ViolationLog } from "../models/ViolationLog";
 import { StudentNetwork } from "../models/StudentNetwork";
 import studentNetworkService from "./StudentNetwork";
-import systemSettingsService, { SystemSettingsService } from "./SystemSettingsServices";
+import systemSettingsService, {
+  SystemSettingsService,
+} from "./sys-settings.service";
 
 import {
   TestConfig,
@@ -14,11 +18,10 @@ import {
   StudentInfo,
 } from "../types/InitService";
 
-
 export class InitService {
   async initialize(
     config: TestConfig,
-    studentList: ClientStudentInformation[]
+    studentList: ClientStudentInformation[],
   ) {
     const puzzles: PuzzleConfig[] = config.puzzles;
     const students: StudentInfo[] = studentList.map((student) => ({
@@ -28,21 +31,21 @@ export class InitService {
     const response1 = await this.initializeTheDatabase(puzzles, students);
     const response2 = await new SystemSettingsService().saveConfig(config);
     const response3 = await new SystemSettingsService().saveStudentList(
-      students
+      students,
     );
-    const response4 = await systemSettingsService.updateConfigAvailability(true);
-    const response5 = await studentNetworkService.initializeStudents(
-      studentList
-    );
+    const response4 =
+      await systemSettingsService.updateConfigAvailability(true);
+    const response5 =
+      await studentNetworkService.initializeStudents(studentList);
     return response1 && response2 && response3 && response4 && response5;
   }
 
   async initializeTheDatabase(
     puzzles: PuzzleConfig[],
-    students: StudentInfo[]
+    students: StudentInfo[],
   ) {
     console.log(
-      `正在初始化 ${students.length} 位學生，共 ${puzzles.length} 題...`
+      `正在初始化 ${students.length} 位學生，共 ${puzzles.length} 題...`,
     );
 
     // 1. 建立 Default Results Template (所有狀態皆為 false)

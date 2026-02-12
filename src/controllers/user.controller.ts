@@ -2,13 +2,13 @@ import { Request, Response } from "express";
 import type { File as MulterFile } from "multer";
 import fs from "fs/promises";
 import path from "path";
-import systemSettingsService from "../service/SystemSettingsServices";
-import scoreBoardService from "../service/ScoreBoardService";
+import systemSettingsService from "../service/sys-settings.service";
+import scoreBoardService from "../service/scoreboard.service";
 import userLogService from "../service/UserLogService";
 import socketService from "../socket/SocketService";
 import studentNetworkService from "../service/StudentNetwork";
 import { antiCheatMiddleware } from "../middlewares/requestGuards";
-import antiCheatService from "../service/AntiCheatService";
+import antiCheatService from "../service/anticheat.service";
 
 export const PROJECT_ROOT = path.join(__dirname, "..");
 export const UPLOAD_DIR = path.join(PROJECT_ROOT, "upload");
@@ -27,13 +27,12 @@ export const status = async (_req: Request, res: Response) => {
 };
 
 export const getConfig = async (_req: Request, res: Response) => {
-  const configAvailibility = await systemSettingsService.getConfigAvailability();
+  const configAvailibility =
+    await systemSettingsService.getConfigAvailability();
   if (!configAvailibility) {
     return res
       .status(500)
-      .json(
-        { success: false, message: "Config not available at the moment." }
-      );
+      .json({ success: false, message: "Config not available at the moment." });
   }
   const config = await systemSettingsService.getConfig();
   if (!config) {
@@ -154,7 +153,7 @@ export const userActionLogger = async (req: Request, res: Response) => {
 
   console.log(
     `User ${studentID} from IP: ${userIP} performed action: ${req.body?.actionType}`,
-    req.body?.details
+    req.body?.details,
   );
 
   await antiCheatService.logWithAntiCheat({

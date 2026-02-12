@@ -1,8 +1,10 @@
 import express from "express";
 import cors from "cors";
 import session from "express-session";
-import adminAPI from "./routes/adminApi";
+// import adminAPI from "./routes/adminApi";
+import adminAPI from "./routes/admin";
 import { connectDB } from "./config/database";
+import { errorMiddleware } from "./middlewares/error-handler";
 
 const adminApp = express();
 
@@ -30,7 +32,7 @@ adminApp.use(
     origin: true, // 或你要的管理用前端網址
     credentials: true,
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  })
+  }),
 );
 adminApp.use(express.json());
 adminApp.use(
@@ -39,7 +41,7 @@ adminApp.use(
     resave: false,
     saveUninitialized: true,
     cookie: { secure: false },
-  })
+  }),
 );
 
 // 中介層：只允許本機 IP
@@ -71,5 +73,8 @@ adminApp.use("/admin", adminAPI);
 adminApp.get("/", (req, res) => {
   res.send("This is admin api server.");
 });
+
+// Error handling middleware (must be last)
+adminApp.use(errorMiddleware);
 
 export default adminApp;

@@ -2,11 +2,15 @@ import { pistonJudger, CompareMode, JudgeResult } from "piston-judger";
 import JudgerConfig from "../constants/piston.config";
 import { ExecutionRequest, PistonSubtaskReply } from "../types/judger.type";
 import { ErrorHandler } from "../middlewares/error-handler";
-import systemSettingsService from "./SystemSettingsServices";
-import codeStorage from "./CodeStorage";
+import systemSettingsService from "./sys-settings.service";
+import codeStorage from "./code-storage";
 import { getZipFilePath } from "../utils/file-operator.util";
 import { ExamConfig, SubTask, TestCase } from "../schemas/config.schemas";
-import { ScoreBoardFormat, ScoreResultFormat, TestCaseRecord } from "../types/scoreboard.type";
+import {
+  ScoreBoardFormat,
+  JudgeResultSocreBoard,
+  TestCaseRecord,
+} from "../types/scoreboard.type";
 import { Puzzle } from "../types/config.type.js";
 import pLimit from "p-limit";
 
@@ -100,7 +104,7 @@ export async function judgePuzzle(
 export async function judgeAllSubmittedPuzzles(
   studentID: string,
   fileNames: string[],
-): Promise<ScoreResultFormat> {
+): Promise<JudgeResultSocreBoard> {
   if (fileNames.length === 0) return {};
 
   const config = await systemSettingsService.getConfig();
@@ -136,7 +140,7 @@ export async function judgeAllSubmittedPuzzles(
   // 這裡的 Promise.all 會同時啟動所有 task，但 p-limit 會確保同一時間只有 15 個在跑
   const completedTasks = await Promise.all(judgeTasks);
 
-  const allResults: ScoreResultFormat = {};
+  const allResults: JudgeResultSocreBoard = {};
   for (const task of completedTasks) {
     allResults[task.problemID] = task.result;
   }

@@ -1,13 +1,13 @@
-import { Table, Column, Model, DataType } from 'sequelize-typescript';
+import { Table, Column, Model, DataType } from "sequelize-typescript";
 
-@Table({ tableName: 'system_settings', timestamps: false })
+@Table({ tableName: "system_settings", timestamps: false })
 export class SystemSettings extends Model {
-    @Column({ primaryKey: true, autoIncrement: true })
-    id!: number;
+  @Column({ primaryKey: true, autoIncrement: true })
+  declare id: number;
 
-    @Column(DataType.STRING)
-    name!: string;
+  @Column(DataType.STRING)
+  name!: string;
 
-    @Column(DataType.TEXT)
-    value!: string;
+  @Column(DataType.TEXT)
+  value!: string;
 }

@@ -54,3 +54,22 @@ export type Puzzle = z.infer<typeof puzzleSchema>;
 export type SubTask = z.infer<typeof subtaskSchema>;
 export type TestCase = z.infer<typeof testCaseSchema>;
 export type AccessUser = z.infer<typeof accessUserSchema>;
+
+export const verifyExamConfig = (
+  config: any,
+): {
+  examConfig: ExamConfig | null;
+  isCorrect: boolean;
+} => {
+  try {
+    return {
+      examConfig: examConfigSchema.parse(config),
+      isCorrect: true,
+    };
+  } catch (error) {
+    return {
+      examConfig: null,
+      isCorrect: false,
+    };
+  }
+};
