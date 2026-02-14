@@ -7,7 +7,7 @@ import {
 } from "../../service/user-crypto.service";
 import { ErrorHandler } from "../../middlewares/error-handler";
 import systemSettingsService from "../../service/sys-settings.service";
-import studentNetworkService from "../../service/StudentNetwork";
+import studentNetworkService from "../../service/student-network.service";
 
 /**
  * Check if student ID exists

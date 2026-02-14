@@ -1,6 +1,6 @@
-import userLogService, { type CreateLogInput } from "./UserLogService";
-import studentNetworkService from "./StudentNetwork";
-import violationLogService from "./ViolationLogService";
+import userLogService, { type CreateLogInput } from "./user-log.service";
+import studentNetworkService from "./student-network.service";
+import violationLogService from "./violation-log.service";
 import { SocketService } from "../socket/SocketService";
 
 /**

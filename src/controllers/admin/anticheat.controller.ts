@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import violationLogService from "../../service/ViolationLogService";
+import violationLogService from "../../service/violation-log.service";
 import { ErrorHandler } from "../../middlewares/error-handler";
 import { SocketService } from "../../socket/SocketService";
 

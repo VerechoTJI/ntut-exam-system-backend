@@ -1,6 +1,6 @@
 import { ErrorHandler } from "../middlewares/error-handler";
 import { StudentNetwork } from "../models/StudentNetwork";
-import userLogService, { type CreateLogInput } from "./UserLogService";
+import userLogService, { type CreateLogInput } from "./user-log.service";
 import { Op } from "sequelize";
 
 class LoggerDeps {

@@ -14,7 +14,7 @@ import { StudentNetwork } from "../models/StudentNetwork";
 import { ErrorHandler } from "../middlewares/error-handler";
 import systemSettingsService from "./sys-settings.service";
 import { sequelize } from "../config/database";
-import studentNetworkService from "./StudentNetwork";
+import studentNetworkService from "./student-network.service";
 
 async function initClientScoreBoard(
   accessableUsers: AccessUser[],

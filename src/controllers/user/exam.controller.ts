@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import systemSettingsService from "../../service/sys-settings.service";
 import scoreBoardService from "../../service/scoreboard.service";
-import userLogService from "../../service/UserLogService";
+import userLogService from "../../service/user-log.service";
 import { SocketService } from "../../socket/SocketService";
 import { ErrorHandler } from "../../middlewares/error-handler";
 import { encryptDataWithUserAES } from "../../service/user-crypto.service";
