@@ -7,6 +7,7 @@ import {
 } from "../../service/user-crypto.service";
 import { ErrorHandler } from "../../middlewares/error-handler";
 import systemSettingsService from "../../service/sys-settings.service";
+import studentNetworkService from "../../service/StudentNetwork";
 
 /**
  * Check if student ID exists
@@ -56,12 +57,19 @@ export const register = async (
 ) => {
   try {
     const { encryptedPayload } = req.body;
-
     if (!encryptedPayload) {
       throw new ErrorHandler(400, "Missing required field: encryptedPayload");
     }
 
-    await registerUserCryptoInfo(encryptedPayload);
+    const payload = await registerUserCryptoInfo(encryptedPayload);
+
+    console.log(
+      `User ${payload.studentID} registered crypto info successfully. Attempting to update network info...`,
+    );
+    await studentNetworkService.updateStudentNetwork(payload.studentID, {
+      ipAddress: req.socket.remoteAddress || undefined,
+      macAddress: req.headers["x-student-mac"] as string | undefined,
+    });
 
     res.status(201).json({
       success: true,

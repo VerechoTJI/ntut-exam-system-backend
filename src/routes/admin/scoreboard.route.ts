@@ -7,7 +7,7 @@ const router = Router();
 router.get("/", scoreboardController.getAllScores);
 
 // Get student score by ID
-router.get("/:studentID", scoreboardController.getScoreByStudentId);
+router.get("/student", scoreboardController.getScoreByStudentId);
 
 // Manually broadcast score update via socket
 router.post("/broadcast", scoreboardController.broadcastScores);

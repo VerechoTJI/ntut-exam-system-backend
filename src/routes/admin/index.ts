@@ -7,6 +7,12 @@ import scoreboardRoute from "./scoreboard.route";
 
 const router = Router();
 
+router.get("/", (req, res) => {
+  return res.json({ message: "Admin API is running." });
+});
+router.get("/health", (req, res) => {
+  return res.json({ status: "ok" });
+});
 router.use("/", initRoute);
 router.use("/config", configRoute);
 router.use("/code", codeRoute);

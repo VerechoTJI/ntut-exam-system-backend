@@ -4,7 +4,7 @@ import path from "path";
 import fs from "fs/promises";
 import * as examController from "../../controllers/user/exam.controller";
 import { verifyUserAccessTokenMiddleware } from "../../middlewares/auth-user-token";
-import { sanitizeStudentID } from "../../controllers/user.controller";
+import { sanitizeStudentID } from "../../utils/guard.util";
 
 const router = Router();
 

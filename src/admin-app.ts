@@ -68,7 +68,7 @@ adminApp.use((req, res, next) => {
 });
 
 // 只允許從 /admin 存取 adminAPI
-adminApp.use("/admin", adminAPI);
+adminApp.use(adminAPI);
 
 adminApp.get("/", (req, res) => {
   res.send("This is admin api server.");

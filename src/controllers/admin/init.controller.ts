@@ -43,3 +43,26 @@ export const getStatus = async (
     next(error);
   }
 };
+
+export const updateStatus = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { exam_status } = req.body;
+
+    if (exam_status === undefined || exam_status === null) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing exam_status in request body",
+      });
+    }
+    await systemSettingsService.updateExamStatus(exam_status);
+    res
+      .status(200)
+      .json({ success: true, message: "Exam status updated successfully" });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -6,7 +6,8 @@ import { SocketService } from "../../socket/SocketService";
 import { ErrorHandler } from "../../middlewares/error-handler";
 import { encryptDataWithUserAES } from "../../service/user-crypto.service";
 import { updateClientJudgeResultToScoreBoardFormat } from "../../utils/judger.util";
-import { sanitizeStudentID } from "../../controllers/user.controller";
+import { sanitizeStudentID } from "../../utils/guard.util";
+import antiCheatService from "../../service/anticheat.service";
 
 /**
  * Get exam config (before exam starts)
@@ -27,12 +28,12 @@ export const getConfig = async (
       );
     }
 
-    const configAvailability =
-      await systemSettingsService.getConfigAvailability();
+    // const configAvailability =
+    //   await systemSettingsService.getConfigAvailability();
 
-    if (!configAvailability) {
-      throw new ErrorHandler(403, "Config is not available at the moment");
-    }
+    // if (!configAvailability) {
+    //   throw new ErrorHandler(403, "Config is not available at the moment");
+    // }
 
     const config = await systemSettingsService.getConfig();
 
@@ -76,6 +77,14 @@ export const getConfigSecure = async (
     // Encrypt config with user's AES key
     const configStr = JSON.stringify(config);
     const encryptedConfig = await encryptDataWithUserAES(configStr, studentID);
+
+    antiCheatService.logWithAntiCheat({
+      student_ID: studentID,
+      ip_address: req.ip || req.socket.remoteAddress || "unknown",
+      mac_address: req.body?.macAddress ?? "",
+      action_type: "get_encrypted_config",
+      details: "Requested encrypted exam config",
+    });
 
     res.status(200).json({
       success: true,
@@ -130,12 +139,12 @@ export const uploadResult = async (
     SocketService.triggerScoreUpdateEvent(allScores);
 
     // Log the action
-    await userLogService.createLog({
+    await antiCheatService.logWithAntiCheat({
       student_ID: studentID,
       ip_address: ip,
       mac_address: mac,
-      action_type: "submit_result",
-      details: "Submitted local test results",
+      action_type: "upload_test_result",
+      details: `Uploaded test result: ${JSON.stringify(testResult)}`,
     });
 
     res.status(200).json({
