@@ -11,16 +11,16 @@ const CONFIG = {
   url: process.env.JUDGER_URL || "http://localhost:2000",
   languages: {
     Python: {
-      name: "python",
+      name: "python3",
       version: "3.12.0",
     },
     Cpp: {
-      name: "cpp",
-      version: "10.2.1",
+      name: "gcc",
+      version: "10.2.0",
     },
     C: {
-      name: "c",
-      version: "10.2.1",
+      name: "gcc",
+      version: "10.2.0",
     },
     JavaScript: {
       name: "javascript",
