@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import * as configService from "../../service/config.service";
 import systemSettingsService from "../../service/sys-settings.service";
+import * as messageService from "../../service/message.service";
+import { MessageSocketService } from "../../socket/MessageSocketService";
 
 /**
  * Create exam configuration
@@ -35,6 +37,16 @@ export const updateConfig = async (
   try {
     const examConfig = req.body;
     await configService.updateConfig(examConfig);
+
+    // Create a config update message and send socket notification
+    const message = await messageService.createMessage(
+      messageService.MessageType.CONFIG_UPDATE,
+      "Exam configuration has been updated",
+    );
+
+    // Trigger socket notification to all connected users
+    MessageSocketService.sendConfigUpdateNotification(message.id);
+
     res.status(200).json({
       success: true,
       message: "Exam configuration updated successfully",

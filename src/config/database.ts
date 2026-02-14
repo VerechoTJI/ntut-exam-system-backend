@@ -6,6 +6,7 @@ import { SystemSettings } from "../models/SystemSettings";
 import { StudentNetwork } from "../models/StudentNetwork";
 import { ViolationLog } from "../models/ViolationLog"; // 新增這行，路徑依實際檔案放置調整
 import { UserCryptoKey } from "../models/UserCryptoKey"; // 新增這行，路徑依實際檔案放置調整
+import { Message } from "../models/Message";
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ export const sequelize = process.env.DATABASE_URL
         ViolationLog,
         StudentNetwork,
         UserCryptoKey, // 新增這行
+        Message,
       ],
       logging: false,
       pool: {
@@ -42,6 +44,7 @@ export const sequelize = process.env.DATABASE_URL
         ViolationLog,
         StudentNetwork,
         UserCryptoKey,
+        Message,
       ],
       logging: false,
       pool: {

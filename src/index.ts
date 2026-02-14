@@ -7,6 +7,7 @@ import { Server } from "socket.io";
 import userApp from "./user-app";
 import adminApp from "./admin-app";
 import socketService from "./socket/SocketService";
+import MessageSocketService from "./socket/MessageSocketService";
 import { connectDB } from "./config/database";
 
 (async () => {
@@ -16,6 +17,17 @@ import { connectDB } from "./config/database";
 // 對外的 user server
 export const USER_PORT = Number(process.env.USER_PORT) || 3001;
 const userServer = http.createServer(userApp);
+
+// 創建 user socket.io server (用於訊息推播)
+const userIo = new Server(userServer, {
+  cors: {
+    origin: true,
+    credentials: true,
+  },
+});
+
+// 初始化 MessageSocketService
+MessageSocketService.initialize(userIo);
 
 userServer.listen(USER_PORT, "0.0.0.0", () => {
   console.log(`User server is running on port ${USER_PORT}`);
