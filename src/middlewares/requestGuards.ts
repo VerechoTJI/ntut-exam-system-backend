@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import antiCheatService from "../service/anticheat.service";
-import { sanitizeStudentID } from "../controllers/user.controller";
+import { sanitizeStudentID } from "../utils/guard.util";
 import scoreBoardService from "../service/scoreboard.service";
 
 /** Simple async wrapper to avoid repeating try/catch in middleware */
