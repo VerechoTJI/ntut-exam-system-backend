@@ -6,3 +6,6 @@ node_modules
 src/spec.md
 src/upload/
 *.pem
+
+result.json
+config.json
