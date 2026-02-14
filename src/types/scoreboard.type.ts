@@ -10,15 +10,15 @@ export interface Subtasks {
   visible: TestCaseRecord[];
 }
 
-export interface JudgeResultSocreBoard {
-  [problemID: string]: PistonSubtaskReply[];
-}
-
 export interface TestCaseRecord {
   status: StatusCode;
   userOutput: string;
   expectedOutput: string;
   time: string;
+}
+
+export interface JudgeResultSocreBoard {
+  [problemID: string]: PistonSubtaskReply[];
 }
 
 export interface ClientTestCaseRecord {
