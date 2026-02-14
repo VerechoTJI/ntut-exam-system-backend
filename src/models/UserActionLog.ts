@@ -6,20 +6,20 @@ export class UserActionLog extends Model {
   declare id: number;
 
   @Column({ type: DataType.DATE, defaultValue: DataType.NOW })
-  timestamp!: Date;
+  declare timestamp: Date;
 
   @Column(DataType.STRING)
-  student_ID!: string;
+  declare student_ID: string;
 
   @Column(DataType.STRING)
-  ip_address!: string;
+  declare ip_address: string;
 
   @Column(DataType.STRING)
-  mac_address!: string;
+  declare mac_address: string;
 
   @Column(DataType.STRING)
-  action_type!: string;
+  declare action_type: string;
 
   @Column(DataType.TEXT)
-  details!: string;
+  declare details: string;
 }

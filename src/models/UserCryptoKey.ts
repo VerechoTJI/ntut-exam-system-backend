@@ -9,17 +9,28 @@ import {
 } from "sequelize-typescript";
 import { Col } from "sequelize/lib/utils";
 
+interface UserCryptoKeyAttributes {
+  uuid: string;
+  createdAt: Date;
+  studentID: string;
+  aesKey: string;
+  userSessionID: string;
+  ipAddress: string;
+  isActive: boolean;
+}
+
 @Table({
   tableName: "user_crypto_keys",
   timestamps: false,
 })
-export class UserCryptoKey extends Model<UserCryptoKey> {
+export class UserCryptoKey extends Model<UserCryptoKeyAttributes>
+  implements UserCryptoKeyAttributes {
   @Column({
     primaryKey: true,
     type: DataType.UUID,
     defaultValue: DataType.UUIDV4,
   })
-  uuid!: string;
+  declare uuid: string;
 
   @Column({
     type: DataType.DATE,
@@ -34,28 +45,28 @@ export class UserCryptoKey extends Model<UserCryptoKey> {
     allowNull: false,
     field: "student_id",
   })
-  studentID!: string;
+  declare studentID: string;
 
   @Column({
     type: DataType.TEXT,
     allowNull: false,
     field: "aes_key",
   })
-  aesKey!: string;
+  declare aesKey: string;
 
   @Column({
     type: DataType.STRING,
     allowNull: false,
     field: "user_session_id",
   })
-  userSessionID!: string;
+  declare userSessionID: string;
 
   @Column({
     type: DataType.STRING,
     allowNull: false,
     field: "ip_address",
   })
-  ipAddress!: string;
+  declare ipAddress: string;
 
   @Column({
     type: DataType.BOOLEAN,
@@ -63,5 +74,5 @@ export class UserCryptoKey extends Model<UserCryptoKey> {
     defaultValue: false,
     field: "is_active",
   })
-  isActive!: boolean;
+  declare isActive: boolean;
 }

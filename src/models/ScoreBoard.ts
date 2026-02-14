@@ -6,30 +6,30 @@ export class ScoreBoard extends Model {
   declare id: number;
 
   @Column({ type: DataType.STRING, allowNull: false, unique: true })
-  student_ID!: string;
+  declare student_ID: string;
 
   @Column({ type: DataType.STRING, allowNull: false })
-  student_name!: string;
+  declare student_name: string;
 
   @Column({ type: DataType.DATE, allowNull: true })
-  last_submit_time!: Date | null;
+  declare last_submit_time: Date | null;
 
   @Column({ type: DataType.INTEGER, defaultValue: 0 })
-  subtask_amount!: number;
+  declare subtask_amount: number;
 
   @Column({ type: DataType.INTEGER, defaultValue: 0 })
-  passed_subtask_amount!: number;
+  declare passed_subtask_amount: number;
 
   @Column({ type: DataType.INTEGER, defaultValue: 0 })
-  puzzle_amount!: number;
+  declare puzzle_amount: number;
 
   @Column({ type: DataType.INTEGER, defaultValue: 0 })
-  passed_puzzle_amount!: number;
+  declare passed_puzzle_amount: number;
 
   @Column({
     type: DataType.JSON,
     allowNull: false,
     defaultValue: {},
   })
-  puzzle_results!: Record<string, boolean>;
+  declare puzzle_results: Record<string, boolean>;
 }
