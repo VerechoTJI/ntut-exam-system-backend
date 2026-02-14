@@ -18,10 +18,10 @@ export class ScoreBoardService {
       const [updatedRows] = await ScoreBoard.update(
         {
           student_ID: studentId,
-          score: passedPuzzleAmount, // 以通過的題目數量作為分數
-          total_puzzles: puzzleAmount,
-          total_subtasks: subtaskAmount,
-          passed_subtasks: passedSubtaskAmount,
+          passed_puzzle_amount: passedPuzzleAmount, // 以通過的題目數量作為分數
+          puzzle_amount: puzzleAmount,
+          subtask_amount: subtaskAmount,
+          passed_subtask_amount: passedSubtaskAmount,
           last_submit_time: new Date(), // 更新最後提交時間
           puzzle_results: input, // 儲存最新的測資結果
         },
@@ -74,8 +74,6 @@ export class ScoreBoardService {
         ],
         // raw: true, // 如果你只想要純 JSON 物件而不是 Sequelize Instance，可以打開這個
       });
-
-      console.log(`✅ 取得 ${allScores.length} 筆學生成績`);
       return allScores;
     } catch (error) {
       console.error("❌ Get all scores failed:", error);

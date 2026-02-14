@@ -5,7 +5,7 @@ import {
 } from "../schemas/config.schemas";
 import { StatusCode } from "piston-judger";
 import { ScoreBoardFormat, TestCaseRecord } from "../types/scoreboard.type";
-import { getClientScoreboard } from "../utils/init-db.util";
+import { getDefaultScoreboard } from "../utils/init-db.util";
 import { ScoreBoard } from "../models/ScoreBoard";
 import { UserActionLog } from "../models/UserActionLog";
 import { SystemSettings } from "../models/SystemSettings";
@@ -14,11 +14,13 @@ import { StudentNetwork } from "../models/StudentNetwork";
 import { ErrorHandler } from "../middlewares/error-handler";
 import systemSettingsService from "./sys-settings.service";
 import { sequelize } from "../config/database";
+import studentNetworkService from "./StudentNetwork";
 
 async function initClientScoreBoard(
   accessableUsers: AccessUser[],
-  defaultScoreboard: ScoreBoardFormat[],
+  defaultScoreboard: ScoreBoardFormat,
 ): Promise<void> {
+  console.log("⚠️ Initializing scoreboard for users:", accessableUsers);
   const records = accessableUsers.map((user, index) => {
     return {
       student_ID: user.id,
@@ -42,20 +44,34 @@ export async function init(
 ): Promise<boolean> {
   try {
     console.log("⚠️ 正在初始化考試系統...");
-    const { examConfig, isCorrect } = verifyExamConfig(config);
+    const { examConfig, isCorrect, errors } = verifyExamConfig(config);
+    console.log("⚠️ Exam config verification result:", {
+      examConfig,
+      isCorrect,
+      errors,
+    });
     if (!isCorrect || examConfig === null) {
-      throw new ErrorHandler(400, "Invalid exam config");
+      throw new ErrorHandler(
+        400,
+        `Invalid exam config: ${JSON.stringify(errors)}`,
+      );
     }
-    const defaultScoreboard = getClientScoreboard(examConfig.puzzles);
+    const defaultScoreboard = getDefaultScoreboard(examConfig.puzzles);
     await initClientScoreBoard(users, defaultScoreboard);
     await systemSettingsService.saveConfig(examConfig);
     await systemSettingsService.updateConfigAvailability(true);
     await systemSettingsService.updateExamStatus(false);
     await systemSettingsService.saveStudentList(users);
-    console.log("✅ Exam system initialized successfully!");
+    await studentNetworkService.initializeStudents(users);
+    console.log("✅ Exam system initialized successfully");
     return true;
   } catch (error) {
-    throw new ErrorHandler(500, "Fail to initialize the exam system");
+    throw new ErrorHandler(
+      500,
+      error instanceof Error
+        ? error.message
+        : "Unknown error during initialization",
+    );
   }
   return false;
 }
@@ -112,6 +128,9 @@ export async function reset(clearSettings: boolean = false) {
   } catch (error) {
     await t.rollback();
     console.error("❌ 重置失敗:", error);
-    throw new ErrorHandler(500, "Database reset failed");
+    throw new ErrorHandler(
+      500,
+      error instanceof Error ? error.message : "Unknown error during reset",
+    );
   }
 }

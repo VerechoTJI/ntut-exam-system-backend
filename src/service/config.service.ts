@@ -18,9 +18,12 @@ const createConfig = async (config: ExamConfig): Promise<void> => {
     );
   }
   // type check
-  const { examConfig, isCorrect } = verifyExamConfig(config);
+  const { examConfig, isCorrect, errors } = verifyExamConfig(config);
   if (!isCorrect || examConfig === null) {
-    throw new ErrorHandler(400, "Invalid exam config");
+    throw new ErrorHandler(
+      400,
+      `Invalid exam config: ${JSON.stringify(errors)}`,
+    );
   }
   await systemSettingsService.saveConfig(examConfig);
 };
@@ -33,9 +36,12 @@ const updateConfig = async (config: ExamConfig): Promise<void> => {
     );
   }
   // type check
-  const { examConfig, isCorrect } = verifyExamConfig(config);
+  const { examConfig, isCorrect, errors } = verifyExamConfig(config);
   if (!isCorrect || examConfig === null) {
-    throw new ErrorHandler(400, "Invalid exam config");
+    throw new ErrorHandler(
+      400,
+      `Invalid exam config: ${JSON.stringify(errors)}`,
+    );
   }
   await systemSettingsService.saveConfig(examConfig);
 };

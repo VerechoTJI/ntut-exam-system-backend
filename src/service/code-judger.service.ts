@@ -13,17 +13,28 @@ import {
 } from "../types/scoreboard.type";
 import { Puzzle } from "../types/config.type.js";
 import pLimit from "p-limit";
+import { Index } from "sequelize-typescript";
 
 const MAX_CONCURRENT_JUDGES = 20;
 
 const client = pistonJudger({ server: JudgerConfig.url });
 
-export function getJudgeRequest(puzzle: Puzzle): ExecutionRequest {
+function getCorrectPistonLanguage(language: string): string {
+  return (
+    JudgerConfig.languages[language as keyof typeof JudgerConfig.languages]
+      ?.name || language
+  );
+}
+
+export function getJudgeRequest(
+  config: ExamConfig,
+  puzzle: Puzzle,
+): ExecutionRequest {
   return {
-    language: puzzle.language,
+    language: getCorrectPistonLanguage(puzzle.language),
     version: JudgerConfig.languages[puzzle.language].version,
-    run_timeout: puzzle.timeLimit,
-    run_memory_limit: puzzle.memoryLimit,
+    run_timeout: puzzle.timeLimit || config.judgerSettings.timeLimit,
+    run_memory_limit: puzzle.memoryLimit || config.judgerSettings.memoryLimit,
     compare_mode: puzzle.compareMode || "loose",
   };
 }
@@ -39,6 +50,19 @@ function getPuzzles(config: ExamConfig, questionIndex: number): Puzzle {
   return puzzle;
 }
 
+async function testOnce() {
+  const result = await client.execute({
+    language: "python3",
+    version: "3.12.0",
+    stdin: "2 3",
+    files: [
+      {
+        content: `a, b = map(int, input().split())\nprint(a + b)`,
+      },
+    ],
+  });
+}
+
 async function judgeTestCases(
   testCases: TestCase[],
   options: ExecutionRequest,
@@ -46,10 +70,14 @@ async function judgeTestCases(
 ): Promise<JudgeResult[]> {
   const promises = testCases.map((tc) =>
     client
-      .execute(options.language, options.version, {
+      .execute({
         ...options,
         stdin: tc.input,
-        code: codeString,
+        files: [
+          {
+            content: codeString,
+          },
+        ],
       })
       .then((res) =>
         client.judge(res, {
@@ -105,13 +133,13 @@ export async function judgeAllSubmittedPuzzles(
   studentID: string,
   fileNames: string[],
 ): Promise<JudgeResultSocreBoard> {
+  // testOnce(); // 先測試一次確保 Judger 服務可用
   if (fileNames.length === 0) return {};
 
   const config = await systemSettingsService.getConfig();
   if (!config) throw new ErrorHandler(500, "No system config found");
 
   const limit = pLimit(MAX_CONCURRENT_JUDGES);
-
   const judgeTasks = fileNames.map((problemID) => {
     // 使用 limit 包裝異步邏輯
     return limit(async () => {
@@ -120,7 +148,6 @@ export async function judgeAllSubmittedPuzzles(
         getZipFilePath(studentID),
         problemID,
       );
-
       // 2. 取得題目索引與配置
       const questionIndex = codeStorage.getFileNameWithoutExt(problemID);
       const subTasks = getSubTasks(config, Number(questionIndex));
@@ -129,7 +156,7 @@ export async function judgeAllSubmittedPuzzles(
       // 3. 執行評測
       const result = await judgePuzzle(
         subTasks,
-        getJudgeRequest(puzzle),
+        getJudgeRequest(config, puzzle),
         codeString,
       );
 
@@ -141,8 +168,10 @@ export async function judgeAllSubmittedPuzzles(
   const completedTasks = await Promise.all(judgeTasks);
 
   const allResults: JudgeResultSocreBoard = {};
+  let index = 0;
   for (const task of completedTasks) {
-    allResults[task.problemID] = task.result;
+    allResults[index] = task.result;
+    index++;
   }
   return allResults;
 }

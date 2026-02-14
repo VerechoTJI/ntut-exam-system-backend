@@ -38,10 +38,13 @@ export class SystemSettingsService {
   }
   async getStudentInfo(studentID: string): Promise<AccessUser | false> {
     const studentList = await this.getStudentList();
+    const toFindStudentId = JSON.stringify(studentID);
     if (!studentList) {
       return false;
     }
-    const userInfo = studentList.find((user) => user.id === studentID);
+    const userInfo = studentList.find((user) => {
+      return JSON.stringify(user.id) === toFindStudentId;
+    });
     return userInfo || false;
   }
   async updateConfigAvailability(available: boolean) {
@@ -94,12 +97,12 @@ export class SystemSettingsService {
       // 檢查是否已存在 (為了避免重複建立，先查一次是比較安全的作法)
       const existing = await SystemSettings.findOne({ where: { name } });
       if (existing) {
-        console.warn(`⚠️ Setting '${name}' 已經存在，請使用 updateSetting`);
+        console.warn(`⚠️ Setting '${name}' is already exists. Create skipped.`);
         return null;
       }
 
       const setting = await SystemSettings.create({ name, value });
-      console.log(`✅ Setting '${name}' 已建立`);
+      // console.log(`✅ Setting '${name}' 已建立`);
       return setting;
     } catch (error) {
       console.error(`❌ Create setting '${name}' failed:`, error);
@@ -118,7 +121,7 @@ export class SystemSettingsService {
         return false;
       }
 
-      console.log(`✅ Setting '${name}' 已更新為 '${value}'`);
+      // console.log(`✅ Setting '${name}' 已更新為 '${value}'`);
       return true;
     } catch (error) {
       console.error(`❌ Update setting '${name}' failed:`, error);

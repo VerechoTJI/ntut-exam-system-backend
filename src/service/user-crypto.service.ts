@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { UserCryptoKey } from "../models/UserCryptoKey";
 import { ErrorHandler } from "../middlewares/error-handler";
+import systemSettigs from "./sys-settings.service";
 import crypto from "crypto";
 
 interface UserAccessTokenPayload {
@@ -154,13 +155,21 @@ async function createUserCryptoInfo(
 
 export async function registerUserCryptoInfo(
   encryptedPayload: string,
-): Promise<void> {
+): Promise<RegisterUserCryptoPayload> {
   // 先 RSA 解密
   const decryptedStr = decryptWithSystemRSA(encryptedPayload);
 
   let payload: RegisterUserCryptoPayload;
   try {
     payload = JSON.parse(decryptedStr);
+    const studentID = payload.studentID;
+    const studentInfo = await systemSettigs.getStudentInfo(studentID);
+    if (!studentInfo) {
+      throw new ErrorHandler(
+        404,
+        "Student info not found for ID: " + studentID,
+      );
+    }
   } catch (error) {
     throw new ErrorHandler(
       400,
@@ -178,6 +187,7 @@ export async function registerUserCryptoInfo(
 
   // 存入資料庫
   await createUserCryptoInfo(payload);
+  return payload;
 }
 
 export async function decryptToken(
@@ -197,13 +207,17 @@ export async function decryptToken(
   }
 }
 
-export async function verifyUserAccessToken(
+export function verifyUserAccessToken(
   studentID: string,
   userToken: UserAccessTokenPayload,
   userRecord: UserCryptoKeyModel,
-): Promise<boolean> {
+): boolean {
   if (!userRecord) {
     throw new ErrorHandler(404, "User crypto record not found");
+  }
+
+  if (studentID != userToken.studentID) {
+    return false;
   }
 
   // 驗證 userSessionID 是否匹配
@@ -217,7 +231,7 @@ export async function verifyUserAccessToken(
 
   const currentTime = Date.now();
   const tokenAge = Math.abs(currentTime - userToken.timestamp);
-  const maxTokenAge = 60 * 1000; // 1 分鐘
+  const maxTokenAge = 60 * 60 * 1000; // 1 分鐘
 
   if (tokenAge > maxTokenAge) {
     return false; // Token 已過期
@@ -231,11 +245,13 @@ export async function decryptNVerrifyUserAccessToken(
   encryptedToken: string,
 ): Promise<boolean> {
   const userRecord = await getUserRecord(studentID);
+
   const decryptedToken = await decryptToken(
     encryptedToken,
     studentID,
     userRecord.aesKey,
   );
+
   const isVerified = verifyUserAccessToken(
     studentID,
     decryptedToken,
