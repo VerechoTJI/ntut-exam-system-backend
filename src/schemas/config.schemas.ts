@@ -1,5 +1,5 @@
 import { z } from "zod";
-import CONFIG, { LanguageKey } from "../constants/piston.config.js";
+import CONFIG, { LanguageKey } from "../constants/piston.config";
 
 const supportedLanguages = Object.keys(CONFIG.languages) as [
   LanguageKey,
@@ -55,21 +55,28 @@ export type SubTask = z.infer<typeof subtaskSchema>;
 export type TestCase = z.infer<typeof testCaseSchema>;
 export type AccessUser = z.infer<typeof accessUserSchema>;
 
-export const verifyExamConfig = (
-  config: any,
-): {
-  examConfig: ExamConfig | null;
-  isCorrect: boolean;
-} => {
+import { ZodError } from "zod";
+
+export const verifyExamConfig = (config: any) => {
   try {
     return {
       examConfig: examConfigSchema.parse(config),
       isCorrect: true,
+      errors: null,
     };
   } catch (error) {
+    if (error instanceof ZodError) {
+      return {
+        examConfig: null,
+        isCorrect: false,
+        errors: error.issues,
+      };
+    }
+
     return {
       examConfig: null,
       isCorrect: false,
+      errors: [{ message: "Unknown error" }],
     };
   }
 };
