@@ -8,12 +8,34 @@ import messageRoute from "./message.route";
 
 const router = Router();
 
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: Check if Admin API is running
+ *     tags: [Admin-Base]
+ *     responses:
+ *       200:
+ *         description: Admin API is running
+ */
 router.get("/", (req, res) => {
   return res.json({ message: "Admin API is running." });
 });
+
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check
+ *     tags: [Admin-Base]
+ *     responses:
+ *       200:
+ *         description: Server status ok
+ */
 router.get("/health", (req, res) => {
   return res.json({ status: "ok" });
 });
+
 router.use("/", initRoute);
 router.use("/config", configRoute);
 router.use("/code", codeRoute);

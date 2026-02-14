@@ -5,6 +5,8 @@ import session from "express-session";
 import adminAPI from "./routes/admin";
 import { connectDB } from "./config/database";
 import { errorMiddleware } from "./middlewares/error-handler";
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "./config/swagger";
 
 const adminApp = express();
 
@@ -43,6 +45,8 @@ adminApp.use(
     cookie: { secure: false },
   }),
 );
+
+adminApp.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // 中介層：只允許本機 IP
 adminApp.use((req, res, next) => {

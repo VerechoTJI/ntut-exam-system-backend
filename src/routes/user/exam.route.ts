@@ -58,9 +58,38 @@ const upload = multer({
   limits: { fileSize: MAX_UPLOAD_SIZE },
 });
 
+/**
+ * @swagger
+ * tags:
+ *   name: User-Exam
+ *   description: Exam execution and file uploads
+ */
+
+/**
+ * @swagger
+ * /exam/config:
+ *   get:
+ *     summary: Get exam config (before exam starts)
+ *     tags: [User-Exam]
+ *     responses:
+ *       200:
+ *         description: Public exam config
+ */
 // Get exam config (before exam starts, no token required)
 router.get("/config", examController.getConfig);
 
+/**
+ * @swagger
+ * /exam/config-secure:
+ *   post:
+ *     summary: Get exam config with token (after exam starts)
+ *     tags: [User-Exam]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Encrypted exam config
+ */
 // Get exam config with token (after exam starts, encrypted)
 router.post(
   "/config-secure",
@@ -68,6 +97,26 @@ router.post(
   examController.getConfigSecure,
 );
 
+/**
+ * @swagger
+ * /exam/result:
+ *   post:
+ *     summary: Upload local test results
+ *     tags: [User-Exam]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               result:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Result uploaded
+ */
 // Upload local test results (requires token)
 router.post(
   "/result",
@@ -75,6 +124,29 @@ router.post(
   examController.uploadResult,
 );
 
+/**
+ * @swagger
+ * /exam/upload:
+ *   post:
+ *     summary: Upload program file
+ *     tags: [User-Exam]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               studentID:
+ *                 type: string
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: File uploaded successfully
+ */
 // Upload program file (requires token)
 router.post(
   "/upload",
