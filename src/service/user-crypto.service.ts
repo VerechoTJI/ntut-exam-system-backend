@@ -290,3 +290,9 @@ export async function encryptDataWithUserAES(
   const userAESKey = decryptWithSystemAES(userRecord.aesKey);
   return encryptDataWithAES(data, userAESKey);
 }
+
+
+export async function deleteUserCryptoInfo(studentID: string): Promise<boolean> {
+  const deletedCount = await UserCryptoKey.destroy({ where: { studentID } });
+  return deletedCount > 0;
+}

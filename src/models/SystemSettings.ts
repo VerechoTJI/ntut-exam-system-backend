@@ -10,7 +10,7 @@ export class SystemSettings extends Model<
   SystemSettingAttributes,
   Omit<SystemSettingAttributes, "id">
 > {
-  @Column({ primaryKey: true, autoIncrement: true })
+  @Column({ type: DataType.INTEGER, primaryKey: true, autoIncrement: true })
   declare id: number;
 
   @Column(DataType.STRING)

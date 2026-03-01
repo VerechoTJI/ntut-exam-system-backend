@@ -1,3 +1,4 @@
+import fa from "zod/v4/locales/fa.js";
 import { ErrorHandler } from "../middlewares/error-handler";
 import { StudentNetwork } from "../models/StudentNetwork";
 import userLogService, { type CreateLogInput } from "./user-log.service";
@@ -11,25 +12,25 @@ class LoggerDeps {
 
 type AlertResult =
   | {
-      alert: true;
-      type:
-        | "more than one user on same ip"
-        | "more than one user on same mac"
-        | "more than one user on same ip and mac"
-        | "using different device";
-      messeage: string;
-    }
+    alert: true;
+    type:
+    | "more than one user on same ip"
+    | "more than one user on same mac"
+    | "more than one user on same ip and mac"
+    | "using different device";
+    messeage: string;
+  }
   | {
-      alert: false;
-      type: "update Info" | "no alert detected";
-      messeage: string;
-    };
+    alert: false;
+    type: "update Info" | "no alert detected";
+    messeage: string;
+  };
 
 export class StudentNetworkService {
   constructor(
     private readonly logger: LoggerDeps,
     private readonly model = StudentNetwork,
-  ) {}
+  ) { }
 
   /** 初始化多筆學生資料。清空 MAC/IP。 */
   async initializeStudents(
@@ -174,13 +175,17 @@ export class StudentNetworkService {
     macAddress: string | null;
     ipAddress: string | null;
   } | null> {
-    const student = await this.model.findOne({ where: { studentID } });
+    const student = await this.model.findOne({
+      where: { studentID },
+      raw: false,
+    });
+    console.log(`getNetworkByStudentID - found student record:`, student);
     if (!student) return null;
     return {
-      macAddress: student.macAddress,
-      ipAddress: student.ipAddress,
-    };
-  }
+      macAddress: student.getDataValue("macAddress"),
+      ipAddress: student.getDataValue("ipAddress"),
+    }
+  };
 
   async updateStudentNetwork(
     studentID: string,

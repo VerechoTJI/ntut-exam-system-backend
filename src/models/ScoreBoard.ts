@@ -2,7 +2,7 @@ import { Table, Column, Model, DataType } from "sequelize-typescript";
 
 @Table({ tableName: "score_boards", timestamps: false })
 export class ScoreBoard extends Model {
-  @Column({ primaryKey: true, autoIncrement: true })
+  @Column({ type: DataType.INTEGER, primaryKey: true, autoIncrement: true })
   declare id: number;
 
   @Column({ type: DataType.STRING, allowNull: false, unique: true })

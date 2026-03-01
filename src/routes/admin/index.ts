@@ -5,6 +5,8 @@ import codeRoute from "./code.route";
 import anticheatRoute from "./anticheat.route";
 import scoreboardRoute from "./scoreboard.route";
 import messageRoute from "./message.route";
+import logRoute from "./log.route";
+import userRoute from "./user.route";
 
 const router = Router();
 
@@ -42,5 +44,6 @@ router.use("/code", codeRoute);
 router.use("/anticheat", anticheatRoute);
 router.use("/scoreboard", scoreboardRoute);
 router.use("/message", messageRoute);
-
+router.use("/logs", logRoute);
+router.use("/user", userRoute);
 export default router;

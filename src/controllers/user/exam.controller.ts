@@ -110,6 +110,8 @@ export const uploadResult = async (
 ) => {
   try {
     const { studentID, testResult } = req.body;
+
+    console.dir(req.body, { depth: null });
     const ip = req.ip || req.socket.remoteAddress || "unknown";
     const mac = req.body?.macAddress ?? "";
 

@@ -12,7 +12,7 @@ export class Message extends Model<
   MessageAttributes,
   Omit<MessageAttributes, "id" | "createdAt">
 > {
-  @Column({ primaryKey: true, autoIncrement: true })
+  @Column({ type: DataType.INTEGER, primaryKey: true, autoIncrement: true })
   declare id: number;
 
   @Column(DataType.STRING)

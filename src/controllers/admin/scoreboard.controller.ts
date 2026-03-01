@@ -33,10 +33,10 @@ export const getScoreByStudentId = async (
   next: NextFunction,
 ) => {
   try {
-    const { studentID } = req.body;
+    const { studentID } = req.query;
     console.log("Received request for studentID:", studentID);
 
-    if (!studentID) {
+    if (!studentID || typeof studentID !== "string") {
       throw new ErrorHandler(400, "Missing required parameter: studentID");
     }
 

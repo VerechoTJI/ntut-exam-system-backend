@@ -15,7 +15,8 @@ import { ErrorHandler } from "../middlewares/error-handler";
 import systemSettingsService from "./sys-settings.service";
 import { sequelize } from "../config/database";
 import studentNetworkService from "./student-network.service";
-
+import { Message } from "../models/Message";
+import { UserCryptoKey } from "../models/UserCryptoKey";
 async function initClientScoreBoard(
   accessableUsers: AccessUser[],
   defaultScoreboard: ScoreBoardFormat,
@@ -117,6 +118,20 @@ export async function reset(clearSettings: boolean = false) {
 
     // 5. 清除學生網路資料
     await StudentNetwork.destroy({
+      where: {},
+      truncate: true,
+      cascade: true,
+      transaction: t,
+    });
+
+    await Message.destroy({
+      where: {},
+      truncate: true,
+      cascade: true,
+      transaction: t,
+    });
+
+    await UserCryptoKey.destroy({
       where: {},
       truncate: true,
       cascade: true,

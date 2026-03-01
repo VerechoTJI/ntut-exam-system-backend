@@ -2,7 +2,7 @@ import { Table, Column, Model, DataType } from "sequelize-typescript";
 
 @Table({ tableName: "user_action_logs", timestamps: false })
 export class UserActionLog extends Model {
-  @Column({ primaryKey: true, autoIncrement: true })
+  @Column({ type: DataType.INTEGER, primaryKey: true, autoIncrement: true })
   declare id: number;
 
   @Column({ type: DataType.DATE, defaultValue: DataType.NOW })
