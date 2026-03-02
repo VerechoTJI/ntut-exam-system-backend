@@ -1,4 +1,4 @@
-import { deleteUserCryptoInfo } from "../../service/user-crypto.service";
+import { deleteUserCryptoInfo, isUserCryptoExist } from "../../service/user-crypto.service";
 import studentNetworkService from "../../service/student-network.service";
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "../../middlewares/error-handler";
@@ -12,10 +12,14 @@ export const deleteUserCrypto = async (
     next: NextFunction,
 ) => {
     try {
-        const { studentID } = req.query;
+        let { studentID } = req.query;
+        studentID = JSON.stringify(studentID);
+        if (!studentID || typeof studentID !== "string") {
+            throw new ErrorHandler(400, "Missing required field: studentID");
+        }
         const sanitizedStudentID = sanitizeStudentID(studentID as string);
         if (!sanitizedStudentID) {
-            throw new ErrorHandler(400, "Missing required field: studentID");
+            throw new ErrorHandler(400, "Invalid studentID format");
         }
         const success = await deleteUserCryptoInfo(sanitizedStudentID);
         const isNetworkRecordDeleted = await studentNetworkService.clearStudentDevices(sanitizedStudentID);
@@ -63,6 +67,29 @@ export const getUserDevicesInfo = async (
                 message: `Network info for studentID ${sanitizedStudentID} not found`,
             });
         }
+    } catch (error) {
+        next(error);
+    }
+}
+export const getUserCryptoExist = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+) => {
+    try {
+        const { studentID } = req.query;
+        if (!studentID || typeof studentID !== "string") {
+            throw new ErrorHandler(400, "Missing required field: studentID");
+        }
+        const sanitizedStudentID = sanitizeStudentID(studentID as string);
+        if (!sanitizedStudentID) {
+            throw new ErrorHandler(400, "Invalid studentID format");
+        }
+        const exists = await isUserCryptoExist(sanitizedStudentID);
+        res.status(200).json({
+            success: true,
+            exists,
+        });
     } catch (error) {
         next(error);
     }

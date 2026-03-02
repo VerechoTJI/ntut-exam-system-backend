@@ -179,7 +179,6 @@ export class StudentNetworkService {
       where: { studentID },
       raw: false,
     });
-    console.log(`getNetworkByStudentID - found student record:`, student);
     if (!student) return null;
     return {
       macAddress: student.getDataValue("macAddress"),

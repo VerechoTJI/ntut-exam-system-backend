@@ -14,6 +14,7 @@ import {
 import { Puzzle } from "../types/config.type.js";
 import pLimit from "p-limit";
 import { Index } from "sequelize-typescript";
+import { get } from "axios";
 
 const MAX_CONCURRENT_JUDGES = 20;
 
@@ -25,7 +26,6 @@ function getCorrectPistonLanguage(language: string): string {
       ?.name || language
   );
 }
-
 export function getJudgeRequest(
   config: ExamConfig,
   puzzle: Puzzle,
@@ -52,15 +52,23 @@ function getPuzzles(config: ExamConfig, questionIndex: number): Puzzle {
 
 async function testOnce() {
   const result = await client.execute({
-    language: "python3",
-    version: "3.12.0",
+    language: "c",
+    version: "10.2.0",
     stdin: "2 3",
     files: [
       {
-        content: `a, b = map(int, input().split())\nprint(a + b)`,
+        name: "main.c",
+        content: `#include <stdio.h>
+int main() {
+    int a, b;
+    scanf("%d %d", &a, &b);
+    printf("%d\\n", a + b);
+    return 0;
+}`,
       },
     ],
   });
+  console.log("Test execute result:", result);
 }
 
 async function judgeTestCases(
@@ -79,12 +87,13 @@ async function judgeTestCases(
           },
         ],
       })
-      .then((res) =>
-        client.judge(res, {
+      .then((res) => {
+        console.log("Judging test case with input:", res);
+        return client.judge(res, {
           expectedOutput: tc.output ?? "",
           compareMode: options.compare_mode || "loose",
-        }),
-      ),
+        });
+      }),
   );
 
   const results = await Promise.allSettled(promises);
@@ -133,7 +142,7 @@ export async function judgeAllSubmittedPuzzles(
   studentID: string,
   fileNames: string[],
 ): Promise<JudgeResultSocreBoard> {
-  // testOnce(); // 先測試一次確保 Judger 服務可用
+  await testOnce(); // 先測試一次確保 Judger 服務可用
   if (fileNames.length === 0) return {};
 
   const config = await systemSettingsService.getConfig();
@@ -159,7 +168,6 @@ export async function judgeAllSubmittedPuzzles(
         getJudgeRequest(config, puzzle),
         codeString,
       );
-
       return { problemID, result };
     });
   });

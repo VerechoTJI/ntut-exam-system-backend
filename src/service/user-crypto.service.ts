@@ -4,6 +4,7 @@ import { UserCryptoKey } from "../models/UserCryptoKey";
 import { ErrorHandler } from "../middlewares/error-handler";
 import systemSettigs from "./sys-settings.service";
 import crypto from "crypto";
+import { ExpressValidator } from "express-validator";
 
 interface UserAccessTokenPayload {
   studentID: string;
@@ -295,4 +296,9 @@ export async function encryptDataWithUserAES(
 export async function deleteUserCryptoInfo(studentID: string): Promise<boolean> {
   const deletedCount = await UserCryptoKey.destroy({ where: { studentID } });
   return deletedCount > 0;
+}
+
+export async function isUserCryptoExist(studentID: string): Promise<boolean> {
+  const record = await UserCryptoKey.findOne({ where: { studentID } });
+  return !!record;
 }

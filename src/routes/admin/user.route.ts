@@ -56,4 +56,6 @@ router.delete('/crypto', userController.deleteUserCrypto);
  */
 router.get('/devices', userController.getUserDevicesInfo);
 
+router.get('/crypto/exist', userController.getUserCryptoExist);
+
 export default router;

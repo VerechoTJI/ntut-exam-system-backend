@@ -59,7 +59,7 @@ export const judgeCode = async (
       originalScoreboard,
     );
 
-    console.dir(updatedScoreboard, { depth: null });
+    // console.dir(updatedScoreboard, { depth: null });
 
     // Update student score in scoreboard
     await scoreBoardService.updateStudentScore(updatedScoreboard, studentID);
