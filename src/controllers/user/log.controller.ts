@@ -20,8 +20,6 @@ export const logAction = async (
     const actionType = req.body?.level || req.body?.actionType || "unknown";
     const details = req.body?.details || req.body?.details || "";
 
-    console.log(`Logging action for studentID: ${studentID}, IP: ${userIP}, MAC: ${mac}, Action: ${actionType}, Details: ${details}`);
-
     // Log with anti-cheat service
     await antiCheatService.logWithAntiCheat({
       student_ID: studentID,
