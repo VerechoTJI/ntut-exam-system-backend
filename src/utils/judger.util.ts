@@ -29,6 +29,41 @@ function mapClientJudgeResultsToScoreBoardFormat(
   };
 }
 
+function overwriteScoreBoardWithPistonResults(
+  pistonSubtaskReply: JudgeResultSocreBoard,
+): ScoreBoardFormat {
+  let updatedScoreboard: ScoreBoardFormat = {};
+
+  for (let problemID in pistonSubtaskReply) {
+    let subtaskReplies = pistonSubtaskReply[problemID];
+    let subtaskResult = [];
+
+    for (let subtaskReply of subtaskReplies) {
+      let hiddenStatus: TestCaseRecord[] = [];
+      let visibleStatus: TestCaseRecord[] = [];
+      for (let hiddenResult of subtaskReply.hidden) {
+        hiddenStatus.push(
+          mapPistonJudgeResultsToScoreBoardFormat(hiddenResult),
+        );
+      }
+      for (let visibleResult of subtaskReply.visible) {
+        visibleStatus.push(
+          mapPistonJudgeResultsToScoreBoardFormat(visibleResult),
+        );
+      }
+
+      subtaskResult.push({
+        hidden: hiddenStatus,
+        visible: visibleStatus,
+      });
+    }
+    updatedScoreboard[problemID] = subtaskResult;
+  }
+
+  return updatedScoreboard;
+}
+
+
 function updatePistonJudgeResultToScoreBoardFormat(
   pistonSubtaskReply: JudgeResultSocreBoard,
   originalScoreboard: ScoreBoardFormat,
@@ -100,4 +135,5 @@ function updateClientJudgeResultToScoreBoardFormat(
 export {
   updatePistonJudgeResultToScoreBoardFormat as updatePistonSubtaskReplyToScoreBoardFormat,
   updateClientJudgeResultToScoreBoardFormat,
+  overwriteScoreBoardWithPistonResults,
 };

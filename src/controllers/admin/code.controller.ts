@@ -4,8 +4,10 @@ import fs from "fs/promises";
 import codeStorage from "../../service/code-storage";
 import { judgeAllSubmittedPuzzles } from "../../service/code-judger.service";
 import scoreBoardService from "../../service/scoreboard.service";
+import systemSettingsService from "../../service/sys-settings.service";
 import { ErrorHandler } from "../../middlewares/error-handler";
-import { updatePistonSubtaskReplyToScoreBoardFormat } from "../../utils/judger.util";
+import { overwriteScoreBoardWithPistonResults } from "../../utils/judger.util";
+import { getDefaultScoreboard } from "../../utils/init-db.util";
 import { SocketService } from "../../socket/SocketService";
 
 const UPLOAD_DIR = path.join(__dirname, "..", "..", "upload");
@@ -49,17 +51,12 @@ export const judgeCode = async (
     // Judge all submitted puzzles
     const judgeResults = await judgeAllSubmittedPuzzles(studentID, fileNames);
 
-    // Get current student scoreboard
-    const currentScore = await scoreBoardService.getScoreByStudentId(studentID);
-    const originalScoreboard = (currentScore?.puzzle_results || {}) as any;
-
-    // Convert judge results to scoreboard format
-    const updatedScoreboard = updatePistonSubtaskReplyToScoreBoardFormat(
-      judgeResults,
-      originalScoreboard,
-    );
-
-    // console.dir(updatedScoreboard, { depth: null });
+    // Build default scoreboard (all problems as WA) then overwrite with piston results
+    const config = await systemSettingsService.getConfig();
+    if (!config) throw new ErrorHandler(500, "No system config found");
+    const defaultScoreboard = getDefaultScoreboard(config.puzzles);
+    const pistonScoreboard = overwriteScoreBoardWithPistonResults(judgeResults);
+    const updatedScoreboard = { ...defaultScoreboard, ...pistonScoreboard };
 
     // Update student score in scoreboard
     await scoreBoardService.updateStudentScore(updatedScoreboard, studentID);

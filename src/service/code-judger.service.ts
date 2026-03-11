@@ -88,7 +88,6 @@ async function judgeTestCases(
         ],
       })
       .then((res) => {
-        console.log("Judging test case with input:", res);
         return client.judge(res, {
           expectedOutput: tc.output ?? "",
           compareMode: options.compare_mode || "loose",
@@ -142,7 +141,6 @@ export async function judgeAllSubmittedPuzzles(
   studentID: string,
   fileNames: string[],
 ): Promise<JudgeResultSocreBoard> {
-  await testOnce(); // 先測試一次確保 Judger 服務可用
   if (fileNames.length === 0) return {};
 
   const config = await systemSettingsService.getConfig();
@@ -176,10 +174,8 @@ export async function judgeAllSubmittedPuzzles(
   const completedTasks = await Promise.all(judgeTasks);
 
   const allResults: JudgeResultSocreBoard = {};
-  let index = 0;
   for (const task of completedTasks) {
-    allResults[index] = task.result;
-    index++;
+    allResults[codeStorage.getFileNameWithoutExt(task.problemID)] = task.result;
   }
   return allResults;
 }

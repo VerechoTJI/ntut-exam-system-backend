@@ -65,15 +65,6 @@ export class StudentNetworkService {
     ipAddress: string;
   }): Promise<{ record: StudentNetwork; alertResult: AlertResult }> {
     const { studentID, name, macAddress, ipAddress } = params;
-    console.log(
-      "StudentNetworkService - addOrUpdateStudentNetwork called with:",
-      {
-        studentID,
-        name,
-        macAddress,
-        ipAddress,
-      },
-    );
     const existing = await this.model.findOne({ where: { studentID } });
     if (!existing) {
       throw new Error(`student ${studentID} not found; no record created`);
