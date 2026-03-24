@@ -34,7 +34,7 @@ export function getJudgeRequest(
     language: getCorrectPistonLanguage(puzzle.language),
     version: JudgerConfig.languages[puzzle.language].version,
     run_timeout: puzzle.timeLimit || config.judgerSettings.timeLimit,
-    run_memory_limit: puzzle.memoryLimit || config.judgerSettings.memoryLimit,
+    run_memory_limit: (puzzle.memoryLimit || config.judgerSettings.memoryLimit) * 1000, // Convert byte to kilobyte
     compare_mode: puzzle.compareMode || "loose",
   };
 }
