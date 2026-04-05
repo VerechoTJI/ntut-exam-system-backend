@@ -16,7 +16,7 @@ const ruleConstraintSchema = z.enum(["MUST_HAVE", "MUST_NOT_HAVE"]);
 const specialRuleSchema: z.ZodType<any> = z.lazy(() =>
   z.object({
     id: z.string(),
-  type: z.enum(["regex", "use", "composite"]),
+    type: z.enum(["regex", "use", "composite"]),
     constraint: ruleConstraintSchema,
     message: z.string(),
     severity: z.enum(["info", "warn"]).optional(),
@@ -61,7 +61,7 @@ export const examConfigSchema = z.object({
     timeLimit: z.number(),
     memoryLimit: z.number(),
   }),
-  accessableUsers: z.array(accessUserSchema),
+  accessibleUsers: z.array(accessUserSchema),
   globalSpecialRules: z.array(specialRuleSchema).optional(),
   puzzles: z.array(puzzleSchema),
 });
