@@ -38,20 +38,12 @@ function setPuzzleSpecialRuleResults(
 ) {
   const existing = updatedScoreboard[puzzleIndexRaw];
 
-  if (Array.isArray(existing)) {
-    updatedScoreboard[puzzleIndexRaw] = {
-      subtasks: existing,
-      specialRuleResults,
-    };
-    return;
-  }
-
-  if (existing && typeof existing === "object") {
+  if (existing && typeof existing === "object" && !Array.isArray(existing)) {
     (existing as any).specialRuleResults = specialRuleResults;
     return;
   }
 
-  // If missing (or invalid), still persist a stable object.
+  // If missing (or invalid), persist a stable canonical object.
   updatedScoreboard[puzzleIndexRaw] = {
     subtasks: [],
     specialRuleResults,
@@ -120,7 +112,7 @@ export const judgeCode = async (
 
       // If no rules configured, persist empty list.
       if (effectiveRules.length === 0) {
-  setPuzzleSpecialRuleResults(updatedScoreboard, puzzleIndexRaw, []);
+        setPuzzleSpecialRuleResults(updatedScoreboard, puzzleIndexRaw, []);
         continue;
       }
 
@@ -136,11 +128,11 @@ export const judgeCode = async (
           reason,
           checkedAt,
         }));
-  setPuzzleSpecialRuleResults(updatedScoreboard, puzzleIndexRaw, specialRuleResults);
+        setPuzzleSpecialRuleResults(updatedScoreboard, puzzleIndexRaw, specialRuleResults);
         continue;
       }
 
-  const results = evaluateSpecialRules(effectiveRules, {
+      const results = evaluateSpecialRules(effectiveRules, {
         language: puzzle.language,
         sourceText,
       });
@@ -154,7 +146,7 @@ export const judgeCode = async (
       }));
 
       // Persist into the scoreboard payload.
-  setPuzzleSpecialRuleResults(updatedScoreboard, puzzleIndexRaw, specialRuleResults);
+      setPuzzleSpecialRuleResults(updatedScoreboard, puzzleIndexRaw, specialRuleResults);
     }
 
     // Update student score in scoreboard

@@ -2,10 +2,8 @@ import { PistonSubtaskReply } from "./judger.type.js";
 import { StatusCode } from "piston-judger";
 
 export interface ScoreBoardFormat {
-  // Historically each problem stored a plain Subtasks[] array.
-  // For special rules (Approach B), some problems may now store an explicit wrapper object.
-  // Keep it flexible and backward compatible.
-  [problemID: string]: Subtasks[] | PuzzleResultPayload;
+  // Canonical shape: always a wrapper object.
+  [problemID: string]: PuzzleResultPayload;
 }
 
 export type SpecialRuleResultRecord = {

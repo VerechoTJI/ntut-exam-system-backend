@@ -37,13 +37,13 @@ vi.mock("../../../../src/service/sys-settings.service", async () => {
 
 vi.mock("../../../../src/utils/init-db.util", async () => {
     return {
-        getDefaultScoreboard: vi.fn(() => ({ "0": [] })),
+        getDefaultScoreboard: vi.fn(() => ({ "0": { subtasks: [], specialRuleResults: [] } })),
     };
 });
 
 vi.mock("../../../../src/utils/judger.util", async () => {
     return {
-        overwriteScoreBoardWithPistonResults: vi.fn(() => ({ "0": [] })),
+        overwriteScoreBoardWithPistonResults: vi.fn(() => ({ "0": { subtasks: [], specialRuleResults: [] } })),
     };
 });
 
@@ -92,7 +92,7 @@ describe("Admin Code Route - Integration", () => {
         expect(res.body.data.result["0"]).toBeTruthy();
 
         const puzzleResult = res.body.data.result["0"];
-        // When special rules are evaluated, we persist the explicit wrapper shape.
+        // Canonical shape: always the wrapper payload.
         expect(puzzleResult.specialRuleResults).toBeDefined();
         expect(Array.isArray(puzzleResult.specialRuleResults)).toBe(true);
         expect(puzzleResult.specialRuleResults[0]).toMatchObject({

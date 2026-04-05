@@ -25,29 +25,13 @@ function getPassedSubtaskAmount(puzzle: Subtasks[]) {
   return { passedTestCaseAmount, testCaseAmount };
 }
 
-function unwrapSubtasks(puzzleResult: ScoreBoardFormat[string]): Subtasks[] {
-  // Legacy shape: Subtasks[]
-  if (Array.isArray(puzzleResult)) {
-    return puzzleResult;
-  }
-
-  // New shape: { subtasks, specialRuleResults }
-  if (puzzleResult && typeof puzzleResult === "object") {
-    const subtasks = (puzzleResult as PuzzleResultPayload).subtasks;
-    if (Array.isArray(subtasks)) return subtasks;
-  }
-
-  // Defensive fallback (corrupt payload)
-  return [];
-}
-
 export function getPassedPuzzleAmount(scoreboard: ScoreBoardFormat) {
   let passedPuzzleAmount = 0;
   let puzzleAmount = 0;
   let subtaskAmount = 0;
   let passedSubtaskAmount = 0;
   for (let problemID in scoreboard) {
-    const subtasks = unwrapSubtasks(scoreboard[problemID]);
+    const subtasks = (scoreboard[problemID] as PuzzleResultPayload)?.subtasks ?? [];
     const { passedTestCaseAmount, testCaseAmount } =
       getPassedSubtaskAmount(subtasks);
     if (passedTestCaseAmount === testCaseAmount) {

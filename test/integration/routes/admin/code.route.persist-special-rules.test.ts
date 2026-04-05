@@ -43,13 +43,13 @@ vi.mock("../../../../src/service/sys-settings.service", async () => {
 
 vi.mock("../../../../src/utils/init-db.util", async () => {
     return {
-        getDefaultScoreboard: vi.fn(() => ({ "0": [] })),
+        getDefaultScoreboard: vi.fn(() => ({ "0": { subtasks: [], specialRuleResults: [] } })),
     };
 });
 
 vi.mock("../../../../src/utils/judger.util", async () => {
     return {
-        overwriteScoreBoardWithPistonResults: vi.fn(() => ({ "0": [] })),
+        overwriteScoreBoardWithPistonResults: vi.fn(() => ({ "0": { subtasks: [], specialRuleResults: [] } })),
     };
 });
 
