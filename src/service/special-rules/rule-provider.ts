@@ -9,13 +9,13 @@ import type { SpecialRule } from "../../schemas/config.schemas";
  * 2) puzzles[puzzleIndex].specialRules (config order)
  */
 export function getEffectiveSpecialRules(input: {
-  examConfig: ExamConfig;
-  puzzleIndex: number;
+    examConfig: ExamConfig;
+    puzzleIndex: number;
 }): SpecialRule[] {
-  const { examConfig, puzzleIndex } = input;
+    const { examConfig, puzzleIndex } = input;
 
-  const globalRules = examConfig.globalSpecialRules ?? [];
-  const puzzleRules = examConfig.puzzles?.[puzzleIndex]?.specialRules ?? [];
+    const globalRules = examConfig.globalSpecialRules ?? [];
+    const puzzleRules = examConfig.puzzles?.[puzzleIndex]?.specialRules ?? [];
 
-  return [...globalRules, ...puzzleRules];
+    return [...globalRules, ...puzzleRules];
 }
