@@ -7,10 +7,10 @@ describe("special-rule-engine import (backend)", () => {
             [
                 {
                     id: "r1",
-                    type: "includes",
+                    type: "use",
                     constraint: "MUST_HAVE",
                     message: "must include main",
-                    params: { needle: "main" },
+                    params: { target: "main" },
                 },
             ],
             { language: "c", sourceText: "int main(){}" },

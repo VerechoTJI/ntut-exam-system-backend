@@ -50,10 +50,10 @@ describe("examConfigSchema - special rules", () => {
                     specialRules: [
                         {
                             id: "p1",
-                            type: "includes",
+                            type: "use",
                             constraint: "MUST_NOT_HAVE",
                             message: "Must not include goto",
-                            params: { needle: "goto", caseSensitive: false },
+                            params: { target: "goto", caseSensitive: false },
                         },
                     ],
                     subtasks: [

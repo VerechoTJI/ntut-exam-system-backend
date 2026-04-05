@@ -12,10 +12,10 @@ describe("special rules - getEffectiveSpecialRules", () => {
             globalSpecialRules: [
                 {
                     id: "g1",
-                    type: "includes",
+                    type: "use",
                     constraint: "MUST_HAVE",
                     message: "g1",
-                    params: { needle: "aaa" },
+                    params: { target: "aaa" },
                 },
             ],
             puzzles: [

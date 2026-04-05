@@ -16,7 +16,7 @@ const ruleConstraintSchema = z.enum(["MUST_HAVE", "MUST_NOT_HAVE"]);
 const specialRuleSchema: z.ZodType<any> = z.lazy(() =>
   z.object({
     id: z.string(),
-    type: z.enum(["regex", "includes", "composite"]),
+  type: z.enum(["regex", "use", "composite"]),
     constraint: ruleConstraintSchema,
     message: z.string(),
     severity: z.enum(["info", "warn"]).optional(),

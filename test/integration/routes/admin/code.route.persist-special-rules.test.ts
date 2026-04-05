@@ -34,7 +34,7 @@ vi.mock("../../../../src/service/sys-settings.service", async () => {
             getConfig: vi.fn(async () => ({
                 puzzles: [{ language: "cpp", subtasks: [] }],
                 globalSpecialRules: [
-                    { id: "r1", type: "includes", constraint: "MUST_HAVE", message: "must include main", params: { needle: "main" } },
+                    { id: "r1", type: "use", constraint: "MUST_HAVE", message: "must include main", params: { target: "main" } },
                 ],
             })),
         },
